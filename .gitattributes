@@ -1,0 +1,27 @@
+# 기본적으로 텍스트 파일은 자동 감지하고 LF로 통일
+* text=auto eol=lf
+
+# 명시적으로 JSON, JS, TS, CSS, HTML 등 LF로 통일
+*.js text eol=lf
+*.ts text eol=lf
+*.jsx text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+
+# 바이너리 파일은 줄 끝 변환 안 함
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
