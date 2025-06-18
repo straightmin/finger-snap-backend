@@ -5,3 +5,4 @@ node_modules/
 .vscode/
 /src/lib/prisma.ts
 /prisma/migrations/
+package-lock.json
