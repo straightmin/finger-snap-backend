@@ -1,0 +1,201 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// -------------------------------------------------------------
+// (1) 기본 설정
+// -------------------------------------------------------------
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // .env에 입력한 URL 사용
+}
+
+// -------------------------------------------------------------
+// (2) 공통 ENUM & 규칙
+// -------------------------------------------------------------
+enum ResourceType {
+  photo
+  comment
+}
+
+// -------------------------------------------------------------
+// (3) 실제 모델 정의
+// -------------------------------------------------------------
+
+/// 사용자
+model User {
+  id           Int       @id @default(autoincrement()) @map("id")
+  email        String    @unique @map("email")
+  passwordHash String    @map("password_hash")
+  username     String    @map("username")
+  bio          String?   @map("bio")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  // relations
+  photos        Photo[]
+  comments      Comment[]
+  likes         Like[]
+  collections   Collection[]
+  series        Series[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+/// 사진(게시물)
+model Photo {
+  id           Int       @id @default(autoincrement()) @map("id")
+  userId       Int       @map("user_id")
+  title        String    @default("Untitled") @map("title")
+  description  String?   @map("description")
+  imageUrl     String    @map("image_url")
+  thumbnailUrl String    @map("thumbnail_url")
+  viewCount    Int       @default(0) @map("view_count")
+  isPublic     Boolean   @default(true) @map("is_public")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  /// relations
+  author        User              @relation(fields: [userId], references: [id])
+  comments      Comment[]
+  // likes     Like[] 다형성 구현으로 FK 불가
+  series        Series[]          @relation("SeriesCover") // 커버로 쓰일 경우
+  inSeries      SeriesPhoto[]     @relation("SeriesToPhoto")
+  inCollections CollectionPhoto[]
+
+  @@index([userId])
+  @@map("photos")
+}
+
+/// 댓글
+model Comment {
+  id        Int       @id @default(autoincrement()) @map("id")
+  photoId   Int       @map("photo_id")
+  userId    Int       @map("user_id")
+  content   String    @map("content")
+  parentId  Int?      @map("parent_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // relations
+  photo  Photo @relation(fields: [photoId], references: [id])
+  author User  @relation(fields: [userId], references: [id])
+  // likes     Like[] 다형성 구현으로 FK 불가
+
+  @@index([photoId])
+  @@index([userId])
+  @@map("comments")
+}
+
+/// 좋아요 (다형성: photo | comment)
+model Like {
+  id           Int          @id @default(autoincrement()) @map("id")
+  userId       Int          @map("user_id")
+  resourceId   Int          @map("resource_id")
+  resourceType ResourceType @map("resource_type")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  // relations
+  user User @relation(fields: [userId], references: [id])
+
+  // 주의: 다형성이므로 Photo/Comment와는 DB 레벨 FK를 걸지 않습니다.
+  @@index([userId])
+  @@index([resourceId, resourceType])
+  @@map("likes")
+}
+
+/// 컬렉션(북마크 모음)
+model Collection {
+  id          Int      @id @default(autoincrement()) @map("id")
+  userId      Int      @map("user_id")
+  title       String   @map("title")
+  description String?  @map("description")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // relations
+  owner  User              @relation(fields: [userId], references: [id])
+  photos CollectionPhoto[]
+
+  @@index([userId])
+  @@map("collections")
+}
+
+/// 컬렉션에 포함된 사진 (N:N)
+model CollectionPhoto {
+  id           Int      @id @default(autoincrement()) @map("id")
+  collectionId Int      @map("collection_id")
+  photoId      Int      @map("photo_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // relations
+  collection Collection @relation(fields: [collectionId], references: [id])
+  photo      Photo      @relation(fields: [photoId], references: [id])
+
+  @@unique([collectionId, photoId])
+  @@map("collection_photos")
+}
+
+/// 알림
+model Notification {
+  id           Int           @id @default(autoincrement()) @map("id")
+  userId       Int           @map("user_id")
+  content      String        @map("content")
+  isRead       Boolean       @default(false) @map("is_read")
+  resourceId   Int?          @map("resource_id")
+  resourceType ResourceType? @map("resource_type")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  // relations
+  receiver User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+/// 사진 시리즈(전시)
+model Series {
+  id           Int      @id @default(autoincrement()) @map("id")
+  userId       Int      @map("user_id")
+  title        String   @map("title")
+  description  String?  @map("description")
+  coverPhotoId Int?     @map("cover_photo_id")
+  isPublic     Boolean  @default(true) @map("is_public")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // relations
+  author     User          @relation(fields: [userId], references: [id])
+  coverPhoto Photo?        @relation("SeriesCover", fields: [coverPhotoId], references: [id])
+  photos     SeriesPhoto[] @relation("SeriesToPhoto") // 시리즈 입장: 여러 장의 사진
+
+  @@index([userId])
+  @@map("series")
+}
+
+/// 시리즈-사진 연결 (N:N + 순서 필드)
+model SeriesPhoto {
+  id        Int      @id @default(autoincrement())
+  seriesId  Int
+  photoId   Int
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  // relations
+  series Series @relation("SeriesToPhoto", fields: [seriesId], references: [id]) // 반대편 연결
+  photo  Photo  @relation("SeriesToPhoto", fields: [photoId], references: [id])
+
+  @@unique([seriesId, photoId])
+  @@index([seriesId, position])
+  @@map("series_photos")
+}

@@ -30,11 +30,11 @@ soft delete 지원 (삭제 대신 비활성화 처리)
 
 finger-snap-backend/
 ├── src/
-│   ├── controllers/
-│   ├── routes/
-│   ├── middlewares/
-│   ├── models/
-│   └── index.js
+│ ├── controllers/
+│ ├── routes/
+│ ├── middlewares/
+│ ├── models/
+│ └── index.js
 ├── .gitignore
 ├── .gitattributes
 ├── package.json
@@ -43,9 +43,11 @@ finger-snap-backend/
 💡 실행 방법
 
 # 의존성 설치
+
 npm install
 
 # 개발 서버 실행 (nodemon)
+
 npm run dev
 
 🔧 환경 변수
@@ -60,8 +62,6 @@ DB_URL=mongodb://localhost:27017/finger-snap
 
 🚧 개발 예정 기능
 
-
-
 👤 개발자
 
 민종현 (GitHub 프로필)
@@ -69,4 +69,3 @@ DB_URL=mongodb://localhost:27017/finger-snap
 📄 License
 
 MIT
-

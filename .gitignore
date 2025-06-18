@@ -1,3 +1,7 @@
 node_modules/
 .env
 .DS_Store
+/src/generated/prisma
+.vscode/
+/src/lib/prisma.ts
+/prisma/migrations/
