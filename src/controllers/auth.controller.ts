@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import prisma from "../lib/prisma";
 import { getMessage } from "../utils/messageMapper";
+import { RequestHandler } from "express";
 
 const healthCheck = {
     status: "ok",
@@ -15,23 +16,25 @@ const myInfo = {
     email: "straightmin@gmail.com",
 };
 
-export const register = async (req: Request, res: Response) => {
+export const register: RequestHandler = async (req: Request, res: Response) => {
     const { username, email, password } = req.body;
     const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     try {
         // 필수값 확인
         if (!username || !email || !password) {
-            return res
-                .status(400)
-                .json({ message: getMessage("MISSING_REQUIRED_FIELDS", lang) });
+            res.status(400).json({
+                message: getMessage("MISSING_REQUIRED_FIELDS", lang),
+            });
+            return;
         }
 
         // 비밀번호 길이 확인
         if (password.length < 8) {
-            return res
-                .status(400)
-                .json({ message: getMessage("PASSWORD_TOO_SHORT", lang) });
+            res.status(400).json({
+                message: getMessage("PASSWORD_TOO_SHORT", lang),
+            });
+            return;
         }
 
         // 이메일 중복 확인
@@ -39,9 +42,10 @@ export const register = async (req: Request, res: Response) => {
             where: { email: req.body.email },
         });
         if (exists) {
-            return res
-                .status(400)
-                .json({ message: getMessage("EMAIL_ALREADY_EXISTS", lang) });
+            res.status(400).json({
+                message: getMessage("EMAIL_ALREADY_EXISTS", lang),
+            });
+            return;
         }
 
         // 비밀번호 해싱
@@ -56,12 +60,10 @@ export const register = async (req: Request, res: Response) => {
             },
         });
 
-        return res.status(201).json({
-            message: getMessage("SUCCESS.REGISTER", lang),
-        });
+        res.status(201).json({ message: getMessage("SUCCESS.REGISTER", lang) });
     } catch (err) {
         console.error("Error during registration:", err);
-        return res.status(500).json({ errorCode: "INTERNAL_SERVER_ERROR" });
+        res.status(500).json({ errorCode: "INTERNAL_SERVER_ERROR" });
     }
 };
 
