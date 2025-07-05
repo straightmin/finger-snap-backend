@@ -3,5 +3,6 @@
     "ERROR.INVALID_PASSWORD": "잘못된 비밀번호입니다.",
     "ERROR.MISSING_FIELDS": "필수 입력란이 누락되었습니다.",
     "ERROR.PASSWORD_TOO_SHORT": "비밀번호는 최소 8자 이상이어야 합니다.",
-    "SUCCESS.REGISTER": "회원가입이 완료되었습니다."
+    "SUCCESS.REGISTER": "회원가입이 완료되었습니다.",
+    "SUCCESS.LOGOUT": "로그아웃되었습니다."
 }

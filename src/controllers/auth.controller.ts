@@ -123,12 +123,34 @@ export const login: RequestHandler = async (req: Request, res: Response) => {
         });
     }
 };
-export const me = (req: Request, res: Response) => {
-    res.send(myInfo);
+
+// get my info api
+export const me: RequestHandler = (req: Request, res: Response) => {
+    // authenticateToken 미들웨어에서 req.user에 사용자 정보가 추가됩니다.
+    // 따라서 req.user가 존재하는지 확인하고 반환합니다.
+
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
+    if (req.user) {
+        res.status(200).json(req.user); // 인증된 사용자 정보 반환
+    } else {
+        // 미들웨어에서 이미 처리되지만, 혹시 모를 경우를 대비한 안전 장치
+        res.status(401).json({
+            message: getMessage("NOT_AUTHENTICATED", lang),
+        });
+    }
 };
-export const ping = (req: Request, res: Response) => {
-    res.send("pong");
+export const ping: RequestHandler = (req: Request, res: Response) => {
+    res.status(200).json({ message: "pong" });
 };
-export const health = (req: Request, res: Response) => {
-    res.send(healthCheck);
+export const health: RequestHandler = (req: Request, res: Response) => {
+    res.status(200).json(healthCheck);
+};
+
+// logout api
+export const logout: RequestHandler = (req: Request, res: Response) => {
+    // JWT는 서버에 세션을 저장하지 않으므로, 서버 측에서 특별히 할 일은 없습니다.
+    // 클라이언트에게 토큰을 삭제하도록 지시하는 메시지를 보냅니다.
+    // 이후 블랙리스트 처리나 세션 관리가 필요할 수 있지만, 현재는 간단히 메시지만 반환합니다.
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
+    res.status(200).json({ message: getMessage("SUCCESS.LOGOUT", lang) });
 };

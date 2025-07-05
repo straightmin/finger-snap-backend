@@ -1,3 +1,4 @@
+// src/routes/auth.routes.ts
 import { Router } from "express";
 import {
     register,
@@ -5,14 +6,17 @@ import {
     me,
     health,
     ping,
+    logout,
 } from "../controllers/auth.controller";
+import { authenticateToken } from "../middlewares/auth.middleware";
 
 console.log("DEBUG handlers:", { register, login, me, health, ping }); // ← import "뒤"
 
 const router = Router();
 router.post("/register", register);
 router.post("/login", login);
-router.get("/me", me);
+router.post("/logout", logout);
+router.get("/me", authenticateToken, me); // authenticateToken 미들웨어 추가
 router.get("/ping", ping);
 router.get("/health", health);
 

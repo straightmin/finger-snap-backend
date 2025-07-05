@@ -3,5 +3,6 @@
     "ERROR.INVALID_PASSWORD": "Password is incorrect.",
     "ERROR.MISSING_FIELDS": "Required fields are missing.",
     "ERROR.PASSWORD_TOO_SHORT": "Password must be at least 8 characters long.",
-    "SUCCESS.REGISTER": "Registration completed successfully."
+    "SUCCESS.REGISTER": "Registration completed successfully.",
+    "SUCCESS.LOGOUT": "Logged out successfully."
 }
