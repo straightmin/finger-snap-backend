@@ -5,7 +5,7 @@ import prisma from "../lib/prisma";
 import { getMessage } from "../utils/messageMapper";
 import { RequestHandler } from "express";
 import { generateToken } from "../utils/generateToken";
-
+//nononononononon
 const healthCheck = {
     status: "ok",
     timestamp: new Date().toISOString(),
