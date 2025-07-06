@@ -1,5 +1,5 @@
 // src/middlewares/auth.middleware.ts
-import { Request, Response, RequestHandler } from 'express';
+import { Request, Response, RequestHandler, NextFunction } from 'express';
 import jwt from "jsonwebtoken";
 import prisma from "../lib/prisma"; // Prisma 클라이언트 임포트
 import { getMessage } from "../utils/messageMapper"; // 메시지 매퍼 임포트
@@ -18,7 +18,7 @@ declare global {
 }
 
 // JWT 검증 미들웨어
-export const authenticateToken: RequestHandler = async (req: Request, res: Response) => {
+export const authenticateToken: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
     // 1. Authorization 헤더에서 토큰 추출
     // 헤더 형식: Bearer <token>
     const authHeader = req.headers["authorization"];
@@ -58,7 +58,7 @@ export const authenticateToken: RequestHandler = async (req: Request, res: Respo
         req.user = user;
 
         // 7. 다음 미들웨어 또는 라우트 핸들러로 제어 전달
-        // next();
+        next();
     } catch (err) {
         // 8. 토큰 검증 실패 (만료, 위조 등) 시 403 Forbidden 응답
         console.error("JWT verification error:", err);
