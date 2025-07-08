@@ -1,5 +1,16 @@
 version: '3.8'
 services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    command: >
+      sh -c "npx prisma migrate deploy && npm run start"
+
   db:
     image: postgres:16
     environment:
@@ -8,3 +19,8 @@ services:
       POSTGRES_DB: fingersnap
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
