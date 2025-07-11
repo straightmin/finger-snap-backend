@@ -76,8 +76,8 @@ AWS_REGION=your_aws_region
 
 👤 개발자
 
-민종현 (GitHub 프로필)
-이재성 (Github 프로필)
+- 민종현 [(GitHub 프로필)](https://github.com/straightmin)
+- 이재성 [(Github 프로필)](https://github.com/jaejae3785)
 
 📄 License
 
