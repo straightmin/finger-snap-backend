@@ -12,40 +12,39 @@ const prisma = new PrismaClient();
 export const getPhotos = async (sortBy: string) => {
     // 'popular' (인기순)으로 정렬하는 경우
     if (sortBy === 'popular') {
-        // 1. 'photo' 타입의 '좋아요'를 resourceId(사진 ID)로 그룹화하여 각 사진의 좋아요 수를 계산합니다.
-        const popularPhotos = await prisma.like.groupBy({
-            by: ['resourceId'],
-            where: {
-                resourceType: 'photo', // 'photo' 타입의 좋아요만 필터링
-            },
-            _count: {
-                resourceId: true, // resourceId의 개수를 셉니다 (즉, 좋아요 수)
-            },
-            orderBy: {
-                _count: {
-                    resourceId: 'desc', // 좋아요 수가 많은 순서대로 내림차순 정렬
-                },
-            },
-        });
-
-        // 2. 인기순으로 정렬된 사진 ID 목록을 추출합니다.
-        const photoIds = popularPhotos.map((p) => p.resourceId);
-
-        // 3. 추출된 사진 ID 목록을 사용하여 해당 사진들의 전체 정보를 조회합니다.
-        //    (이때, 사진 자체는 최신순으로 보여주는 것이 일반적이므로 createdAt으로 정렬)
+        // Photo 모델을 직접 쿼리하면서, 관계된 PhotoLike의 개수(likes._count)를 기준으로 정렬합니다.
+        // 이 방식은 좋아요가 없는 사진도 결과에 포함시킵니다.
         return prisma.photo.findMany({
-            where: {
-                id: {
-                    in: photoIds, // 인기 있는 사진 ID 목록에 포함된 사진만 조회
-                },
+            include: {
+                // 좋아요 수를 계산하기 위해 likes 관계를 포함시킵니다.
+                // 실제 좋아요 데이터를 모두 가져올 필요는 없으므로, select를 통해 필요한 정보만 제한할 수 있으나,
+                // 여기서는 _count를 위해 전체를 포함합니다.
+                likes: true,
+                author: {
+                    select: {
+                        id: true,
+                        username: true,
+                    }
+                }
             },
             orderBy: {
-                createdAt: 'desc', // 사진은 최신순으로 정렬
+                // likes 관계의 개수(count)를 기준으로 내림차순 정렬합니다.
+                likes: {
+                    _count: 'desc',
+                },
             },
         });
     } else {
         // 'latest' (최신순) 또는 그 외의 경우, 모든 사진을 최신순으로 정렬하여 반환합니다.
         return prisma.photo.findMany({
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        username: true,
+                    }
+                }
+            },
             orderBy: {
                 createdAt: 'desc', // 생성일(createdAt) 기준으로 내림차순 정렬
             },

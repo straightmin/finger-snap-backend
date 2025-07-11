@@ -19,7 +19,8 @@ model User {
   deletedAt     DateTime?      @map("deleted_at")
   collections   Collection[]
   comments      Comment[]
-  likes         Like[]
+  photoLikes    PhotoLike[]
+  commentLikes  CommentLike[]
   notifications Notification[]
   photos        Photo[]
   series        Series[]
@@ -42,6 +43,7 @@ model Photo {
   deletedAt     DateTime?         @map("deleted_at")
   inCollections CollectionPhoto[]
   comments      Comment[]
+  likes         PhotoLike[]
   author        User              @relation(fields: [userId], references: [id])
   series        Series[]          @relation("SeriesCover")
   inSeries      SeriesPhoto[]     @relation("SeriesToPhoto")
@@ -60,6 +62,7 @@ model Comment {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
+  likes     CommentLike[]
   photo     Photo     @relation(fields: [photoId], references: [id])
   author    User      @relation(fields: [userId], references: [id])
 
@@ -68,18 +71,34 @@ model Comment {
   @@map("comments")
 }
 
-/// 좋아요 (다형성: photo | comment)
-model Like {
-  id           Int          @id @default(autoincrement()) @map("id")
-  userId       Int          @map("user_id")
-  resourceId   Int          @map("resource_id")
-  resourceType ResourceType @map("resource_type")
-  createdAt    DateTime     @default(now()) @map("created_at")
-  user         User         @relation(fields: [userId], references: [id])
+/// 사진 좋아요
+model PhotoLike {
+  id        Int      @id @default(autoincrement()) @map("id")
+  userId    Int      @map("user_id")
+  photoId   Int      @map("photo_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, photoId])
   @@index([userId])
-  @@index([resourceId, resourceType])
-  @@map("likes")
+  @@index([photoId])
+  @@map("photo_likes")
+}
+
+/// 댓글 좋아요
+model CommentLike {
+  id        Int      @id @default(autoincrement()) @map("id")
+  userId    Int      @map("user_id")
+  commentId Int      @map("comment_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+  @@index([userId])
+  @@index([commentId])
+  @@map("comment_likes")
 }
 
 /// 컬렉션(북마크 모음)
@@ -112,14 +131,14 @@ model CollectionPhoto {
 
 /// 알림
 model Notification {
-  id           Int           @id @default(autoincrement()) @map("id")
-  userId       Int           @map("user_id")
-  content      String        @map("content")
-  isRead       Boolean       @default(false) @map("is_read")
-  resourceId   Int?          @map("resource_id")
-  resourceType ResourceType? @map("resource_type")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  receiver     User          @relation(fields: [userId], references: [id])
+  id           Int     @id @default(autoincrement()) @map("id")
+  userId       Int     @map("user_id")
+  content      String  @map("content")
+  isRead       Boolean @default(false) @map("is_read")
+  resourceId   Int?    @map("resource_id")
+  resourceType String? @map("resource_type")
+  createdAt    DateTime @default(now()) @map("created_at")
+  receiver     User    @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@map("notifications")
@@ -156,9 +175,4 @@ model SeriesPhoto {
   @@unique([seriesId, photoId])
   @@index([seriesId, position])
   @@map("series_photos")
-}
-
-enum ResourceType {
-  photo
-  comment
 }
