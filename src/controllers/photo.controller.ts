@@ -29,25 +29,44 @@ export const getPhotos = async (req: Request, res: Response) => {
  * @param next Express의 NextFunction 객체. 에러 처리를 위해 사용됩니다.
  */
 export const uploadPhoto = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    if (!req.file) {
-      res.status(400).json({ message: 'PHOTO_IS_REQUIRED' });
+    try {
+        if (!req.file) {
+            res.status(400).json({ message: 'PHOTO_IS_REQUIRED' });
+        }
+
+        const { title, description } = req.body;
+        const userId = req.user!.id;
+        const imageUrl = (req.file as any).location; // multer-s3는 location 속성에 URL을 담아줌
+
+        const photoData = {
+            title,
+            description,
+            imageUrl,
+            userId,
+        };
+
+        const newPhoto = await photoService.createPhoto(photoData);
+        res.status(201).json(newPhoto);
+    } catch (error) {
+        next(error);
     }
+};
 
-    const { title, description } = req.body;
-    const userId = req.user!.id;
-    const imageUrl = (req.file as any).location; // multer-s3는 location 속성에 URL을 담아줌
+/**
+ * 사진을 삭제하는 컨트롤러 함수
+ * @param req Express의 Request 객체. `req.params.id`로 사진 ID, `req.user`로 인증된 사용자 정보를 받습니다.
+ * @param res Express의 Response 객체. 성공 메시지 또는 에러 메시지를 반환합니다.
+ * @param next Express의 NextFunction 객체. 에러 처리를 위해 사용됩니다.
+ */
+export const deletePhoto = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const photoId = parseInt(req.params.id, 10);
+        const userId = req.user!.id;
 
-    const photoData = {
-      title,
-      description,
-      imageUrl,
-      userId,
-    };
+        await photoService.deletePhoto(photoId, userId);
 
-    const newPhoto = await photoService.createPhoto(photoData);
-    res.status(201).json(newPhoto);
-  } catch (error) {
-    next(error);
-  }
+        res.status(200).json({ message: 'PHOTO_DELETED_SUCCESSFULLY' });
+    } catch (error) {
+        next(error);
+    }
 };
