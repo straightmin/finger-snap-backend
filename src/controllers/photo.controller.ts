@@ -1,5 +1,5 @@
 // src/controllers/photo.controller.ts
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import * as photoService from '../services/photo.service';
 
 /**
@@ -20,4 +20,34 @@ export const getPhotos = async (req: Request, res: Response) => {
         // 에러가 발생하면 상태 코드 500과 함께 에러 메시지를 응답합니다.
         res.status(500).json({ message: 'ERROR_FETCHING_PHOTOS', error });
     }
+};
+
+/**
+ * 사진을 업로드하는 컨트롤러 함수
+ * @param req Express의 Request 객체. `req.file`로 업로드된 파일 정보, `req.body`로 제목/설명, `req.user`로 인증된 사용자 정보를 받습니다.
+ * @param res Express의 Response 객체. 생성된 사진 정보 또는 에러 메시지를 반환합니다.
+ * @param next Express의 NextFunction 객체. 에러 처리를 위해 사용됩니다.
+ */
+export const uploadPhoto = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ message: 'PHOTO_IS_REQUIRED' });
+    }
+
+    const { title, description } = req.body;
+    const userId = req.user!.id;
+    const imageUrl = (req.file as any).location; // multer-s3는 location 속성에 URL을 담아줌
+
+    const photoData = {
+      title,
+      description,
+      imageUrl,
+      userId,
+    };
+
+    const newPhoto = await photoService.createPhoto(photoData);
+    res.status(201).json(newPhoto);
+  } catch (error) {
+    next(error);
+  }
 };

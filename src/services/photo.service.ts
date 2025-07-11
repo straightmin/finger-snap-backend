@@ -51,3 +51,27 @@ export const getPhotos = async (sortBy: string) => {
         });
     }
 };
+
+/**
+ * 새로운 사진 데이터를 데이터베이스에 생성하는 서비스 함수
+ * @param photoData 사진 생성에 필요한 데이터 (title, description, imageUrl, userId)
+ * @returns 생성된 사진 객체
+ */
+export const createPhoto = async (photoData: {
+  title?: string;
+  description?: string;
+  imageUrl: string;
+  userId: number;
+}) => {
+  const { title, description, imageUrl, userId } = photoData;
+
+  return prisma.photo.create({
+    data: {
+      title: title || 'Untitled',
+      description: description || null,
+      imageUrl,
+      thumbnailUrl: imageUrl, // 우선 원본 이미지 URL을 썸네일로 사용
+      userId,
+    },
+  });
+};
