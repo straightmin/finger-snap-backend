@@ -22,19 +22,19 @@ Finger Snap은 단순히 사진을 올리는 것을 넘어,
 
 🗂️ 폴더 구조
 
-finger-snap-backend/
-├── src/
-│ ├── controllers/
-│ ├── routes/
-│ ├── middlewares/
-│ ├── services/
-│ ├── lib/
-│ ├── utils/
-│ └── server.ts
-├── prisma/
-│ └── schema.prisma
-├── .env.example
-├── package.json
+finger-snap-backend/  
+├── src/  
+│ ├── controllers/  
+│ ├── routes/  
+│ ├── middlewares/  
+│ ├── services/  
+│ ├── lib/  
+│ ├── utils/  
+│ └── server.ts  
+├── prisma/  
+│ └── schema.prisma  
+├── .env.example  
+├── package.json  
 └── README.md
 
 💡 실행 방법
@@ -51,12 +51,12 @@ npm run dev
 
 .env 파일을 프로젝트 루트에 만들어 주세요:
 
-PORT=3000
-JWT_SECRET=your_secret_key
-DATABASE_URL="postgresql://user:password@localhost:5432/mydatabase?schema=public"
-AWS_ACCESS_KEY_ID=your_aws_access_key_id
-AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
-AWS_S3_BUCKET_NAME=your_s3_bucket_name
+PORT=3000  
+JWT_SECRET=your_secret_key  
+DATABASE_URL="postgresql://user:password@localhost:5432/mydatabase?schema=public"  
+AWS_ACCESS_KEY_ID=your_aws_access_key_id  
+AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key  
+AWS_S3_BUCKET_NAME=your_s3_bucket_name  
 AWS_REGION=your_aws_region
 
 🚧 개발 예정 기능
