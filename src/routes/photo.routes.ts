@@ -1,6 +1,6 @@
 // src/routes/photo.routes.ts
 import { Router } from 'express';
-import { getPhotos, uploadPhoto, deletePhoto } from '../controllers/photo.controller';
+import { getPhotos, uploadPhoto, deletePhoto, getPhotoById } from '../controllers/photo.controller';
 import { authenticateToken } from '../middlewares/auth.middleware';
 import upload from '../middlewares/upload.middleware';
 
@@ -11,6 +11,10 @@ const router = Router();
 // 사진 목록을 조회하는 라우트입니다.
 // 쿼리 파라미터 `sortBy` 값에 따라 '최신순' 또는 '인기순'으로 정렬됩니다.
 router.get('/', getPhotos);
+
+// GET /api/photos/:id
+// 특정 ID의 사진을 조회하는 라우트입니다.
+router.get('/:id', getPhotoById);
 
 // POST /api/photos
 // 사진을 업로드하는 라우트입니다.

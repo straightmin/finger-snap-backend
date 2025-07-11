@@ -59,6 +59,40 @@ export const getPhotos = async (sortBy: string) => {
 };
 
 /**
+ * ID로 특정 사진의 상세 정보를 조회하는 서비스 함수
+ * @param photoId 조회할 사진의 ID
+ * @returns 사진, 작성자, 댓글(작성자 포함), 좋아요 정보를 포함하는 객체
+ */
+export const getPhotoById = async (photoId: number) => {
+    return prisma.photo.findUnique({
+        where: { id: photoId, deletedAt: null },
+        include: {
+            author: {
+                select: {
+                    id: true,
+                    username: true,
+                },
+            },
+            comments: {
+                where: { deletedAt: null },
+                include: {
+                    author: {
+                        select: {
+                            id: true,
+                            username: true,
+                        },
+                    },
+                },
+                orderBy: {
+                    createdAt: 'desc',
+                },
+            },
+            likes: true, // 좋아요 정보 포함
+        },
+    });
+};
+
+/**
  * 새로운 사진 데이터를 데이터베이스에 생성하는 서비스 함수
  * @param photoData 사진 생성에 필요한 데이터 (title, description, imageUrl, userId)
  * @returns 생성된 사진 객체

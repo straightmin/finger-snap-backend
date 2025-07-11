@@ -23,6 +23,27 @@ export const getPhotos = async (req: Request, res: Response) => {
 };
 
 /**
+ * ID로 특정 사진을 조회하는 컨트롤러 함수
+ * @param req Express의 Request 객체. `req.params.id`로 사진 ID를 받습니다.
+ * @param res Express의 Response 객체. 조회된 사진 정보 또는 에러 메시지를 반환합니다.
+ * @param next Express의 NextFunction 객체. 에러 처리를 위해 사용됩니다.
+ */
+export const getPhotoById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const photoId = parseInt(req.params.id, 10);
+        const photo = await photoService.getPhotoById(photoId);
+
+        if (!photo) {
+            return res.status(404).json({ message: 'PHOTO_NOT_FOUND' });
+        }
+
+        res.status(200).json(photo);
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
  * 사진을 업로드하는 컨트롤러 함수
  * @param req Express의 Request 객체. `req.file`로 업로드된 파일 정보, `req.body`로 제목/설명, `req.user`로 인증된 사용자 정보를 받습니다.
  * @param res Express의 Response 객체. 생성된 사진 정보 또는 에러 메시지를 반환합니다.
