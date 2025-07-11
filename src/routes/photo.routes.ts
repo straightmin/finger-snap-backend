@@ -1,6 +1,12 @@
 // src/routes/photo.routes.ts
 import { Router } from 'express';
-import { getPhotos, uploadPhoto, deletePhoto, getPhotoById } from '../controllers/photo.controller';
+import {
+    getPhotos,
+    uploadPhoto,
+    deletePhoto,
+    getPhotoById,
+    updatePhotoVisibility,
+} from '../controllers/photo.controller';
 import { authenticateToken } from '../middlewares/auth.middleware';
 import upload from '../middlewares/upload.middleware';
 
@@ -20,6 +26,11 @@ router.get('/:id', getPhotoById);
 // 사진을 업로드하는 라우트입니다.
 // 인증된 사용자만 접근할 수 있으며, 'photo'라는 이름의 필드로 파일을 받습니다.
 router.post('/', authenticateToken, upload.single('photo'), uploadPhoto);
+
+// PATCH /api/photos/:id/visibility
+// 특정 ID의 사진 공개 상태를 변경하는 라우트입니다.
+// 인증된 사용자만 자신의 사진 상태를 변경할 수 있습니다.
+router.patch('/:id/visibility', authenticateToken, updatePhotoVisibility);
 
 // DELETE /api/photos/:id
 // 특정 ID의 사진을 삭제하는 라우트입니다.

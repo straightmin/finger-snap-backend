@@ -12,6 +12,7 @@ const prisma = new PrismaClient();
 export const getPhotos = async (sortBy: string) => {
     const whereCondition = {
         deletedAt: null, // 소프트 삭제된 사진은 제외
+        isPublic: true, // 공개된 사진만 조회
     };
 
     // 'popular' (인기순)으로 정렬하는 경우
@@ -65,7 +66,7 @@ export const getPhotos = async (sortBy: string) => {
  */
 export const getPhotoById = async (photoId: number) => {
     return prisma.photo.findUnique({
-        where: { id: photoId, deletedAt: null },
+        where: { id: photoId, deletedAt: null, isPublic: true },
         include: {
             author: {
                 select: {
@@ -139,5 +140,32 @@ export const deletePhoto = async (photoId: number, userId: number) => {
     return prisma.photo.update({
         where: { id: photoId },
         data: { deletedAt: new Date() },
+    });
+};
+
+/**
+ * 사진의 공개 상태를 변경하는 서비스 함수
+ * @param photoId 사진 ID
+ * @param userId 요청한 사용자의 ID
+ * @param isPublic 새로운 공개 상태
+ * @returns 업데이트된 사진 객체
+ * @throws Error 사진이 존재하지 않거나 권한이 없는 경우
+ */
+export const updatePhotoVisibility = async (photoId: number, userId: number, isPublic: boolean) => {
+    const photo = await prisma.photo.findUnique({
+        where: { id: photoId },
+    });
+
+    if (!photo) {
+        throw new Error('PHOTO_NOT_FOUND');
+    }
+
+    if (photo.userId !== userId) {
+        throw new Error('UNAUTHORIZED');
+    }
+
+    return prisma.photo.update({
+        where: { id: photoId },
+        data: { isPublic },
     });
 };

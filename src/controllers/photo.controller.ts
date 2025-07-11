@@ -74,6 +74,30 @@ export const uploadPhoto = async (req: Request, res: Response, next: NextFunctio
 };
 
 /**
+ * 사진의 공개 상태를 변경하는 컨트롤러 함수
+ * @param req Express의 Request 객체. `req.params.id`로 사진 ID, `req.body.isPublic`으로 공개 여부, `req.user`로 인증된 사용자 정보를 받습니다.
+ * @param res Express의 Response 객체. 업데이트된 사진 정보 또는 에러 메시지를 반환합니다.
+ * @param next Express의 NextFunction 객체. 에러 처리를 위해 사용됩니다.
+ */
+export const updatePhotoVisibility = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const photoId = parseInt(req.params.id, 10);
+        const { isPublic } = req.body;
+        const userId = req.user!.id;
+
+        if (typeof isPublic !== 'boolean') {
+            return res.status(400).json({ message: 'IS_PUBLIC_FIELD_IS_REQUIRED_AND_MUST_BE_A_BOOLEAN' });
+        }
+
+        const updatedPhoto = await photoService.updatePhotoVisibility(photoId, userId, isPublic);
+
+        res.status(200).json(updatedPhoto);
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
  * 사진을 삭제하는 컨트롤러 함수
  * @param req Express의 Request 객체. `req.params.id`로 사진 ID, `req.user`로 인증된 사용자 정보를 받습니다.
  * @param res Express의 Response 객체. 성공 메시지 또는 에러 메시지를 반환합니다.
