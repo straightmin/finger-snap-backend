@@ -1,5 +1,8 @@
 // src/services/photo.service.ts
 import { PrismaClient } from '@prisma/client';
+import sharp from 'sharp';
+import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import s3Client, { bucketName } from '../lib/s3Client';
 
 // Prisma 클라이언트 인스턴스를 생성합니다.
 const prisma = new PrismaClient();
@@ -71,12 +74,45 @@ export const createPhoto = async (photoData: {
 }) => {
     const { title, description, imageUrl, userId } = photoData;
 
+    // 1. imageUrl에서 S3 객체 키 추출
+    const urlParts = imageUrl.split('/');
+    const originalKey = urlParts.slice(3).join('/'); // "bucketName.s3.region.amazonaws.com/" 이후의 경로
+
+    // 2. S3에서 원본 이미지 스트림 가져오기
+    const { Body } = await s3Client.send(new GetObjectCommand({
+        Bucket: bucketName,
+        Key: originalKey,
+    }));
+
+    if (!Body) {
+        throw new Error('Failed to get image from S3');
+    }
+
+    const imageBuffer = await Body.transformToByteArray();
+
+    // 3. sharp를 사용하여 썸네일 생성 (예시: 200x200)
+    const thumbnailBuffer = await sharp(imageBuffer)
+        .resize(200, 200, { fit: 'inside' })
+        .toFormat('jpeg')
+        .toBuffer();
+
+    // 4. 썸네일을 S3에 업로드
+    const thumbnailKey = `thumbnails/${Date.now().toString()}-${originalKey.split('/').pop()}`;
+    await s3Client.send(new PutObjectCommand({
+        Bucket: bucketName,
+        Key: thumbnailKey,
+        Body: thumbnailBuffer,
+        ContentType: 'image/jpeg',
+    }));
+    const thumbnailUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${thumbnailKey}`;
+
+    // 5. DB에 원본 및 썸네일 URL 저장
     return prisma.photo.create({
         data: {
             title: title || 'Untitled',
             description: description || null,
-            imageUrl,
-            thumbnailUrl: imageUrl, // 우선 원본 이미지 URL을 썸네일로 사용
+            imageUrl, // 원본 이미지 URL
+            thumbnailUrl, // 썸네일 이미지 URL
             userId,
         },
     });
