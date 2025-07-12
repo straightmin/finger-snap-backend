@@ -2,6 +2,8 @@
 import express from "express";
 import authRoutes from "./routes/auth.routes";
 import photoRoutes from "./routes/photo.routes";
+import likeRoutes from "./routes/like.routes";
+import { errorHandler } from "./middlewares/errorHandler";
 
 // Express 애플리케이션을 생성합니다.
 const app = express();
@@ -14,6 +16,12 @@ app.use("/api/auth", authRoutes);
 
 // 사진 관련 라우트를 /api/photos 경로에 등록합니다.
 app.use("/api/photos", photoRoutes);
+
+// 좋아요 관련 라우트를 /api/likes 경로에 등록합니다.
+app.use("/api/likes", likeRoutes);
+
+// 오류 처리 미들웨어
+app.use(errorHandler);
 
 console.log("router ready");
 
