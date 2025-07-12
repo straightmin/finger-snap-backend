@@ -25,10 +25,9 @@ export const getPhotos = async (sortBy: string) => {
         return prisma.photo.findMany({
             where: whereCondition,
             include: {
-                // 좋아요 수를 계산하기 위해 likes 관계를 포함시킵니다.
-                // 실제 좋아요 데이터를 모두 가져올 필요는 없으므로, select를 통해 필요한 정보만 제한할 수 있으나,
-                // 여기서는 _count를 위해 전체를 포함합니다.
-                likes: true,
+                _count: {
+                    select: { likes: true },
+                },
                 author: {
                     select: {
                         id: true,
@@ -48,6 +47,9 @@ export const getPhotos = async (sortBy: string) => {
         return prisma.photo.findMany({
             where: whereCondition,
             include: {
+                _count: {
+                    select: { likes: true },
+                },
                 author: {
                     select: {
                         id: true,
@@ -68,8 +70,8 @@ export const getPhotos = async (sortBy: string) => {
  * @returns 사진, 작성자, 댓글(작성자 포함), 좋아요 정보를 포함하는 객체
  */
 export const getPhotoById = async (photoId: number) => {
-    return prisma.photo.findUnique({
-        where: { id: photoId, deletedAt: null, isPublic: true },
+    return prisma.photo.findFirst({
+        where: { id: { equals: photoId }, deletedAt: null, isPublic: true },
         include: {
             author: {
                 select: {
@@ -91,7 +93,9 @@ export const getPhotoById = async (photoId: number) => {
                     createdAt: 'desc',
                 },
             },
-            likes: true, // 좋아요 정보 포함
+            _count: {
+                select: { likes: true }, // 좋아요 수 포함
+            },
         },
     });
 };
@@ -203,5 +207,39 @@ export const updatePhotoVisibility = async (photoId: number, userId: number, isP
     return prisma.photo.update({
         where: { id: photoId },
         data: { isPublic },
+    });
+};
+
+/**
+ * 사용자가 좋아요를 누른 사진 목록을 조회하는 서비스 함수
+ * @param userId 조회할 사용자의 ID
+ * @returns 사용자가 좋아요를 누른 사진 목록
+ */
+export const getLikedPhotos = async (userId: number) => {
+    return prisma.photoLike.findMany({
+        where: {
+            userId: userId,
+            photo: {
+                deletedAt: null, // 삭제되지 않은 사진만
+            },
+        },
+        include: {
+            photo: {
+                include: {
+                    author: {
+                        select: {
+                            id: true,
+                            username: true,
+                        },
+                    },
+                    _count: {
+                        select: { likes: true },
+                    },
+                },
+            },
+        },
+        orderBy: {
+            createdAt: 'desc',
+        },
     });
 };
