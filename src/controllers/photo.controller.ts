@@ -23,6 +23,11 @@ export const getPhotos = asyncHandler(async (req: Request, res: Response) => {
  */
 export const getPhotoById = asyncHandler(async (req: Request, res: Response) => {
     const photoId = parseInt(req.params.id, 10);
+
+    if (isNaN(photoId)) {
+        return res.status(400).json({ message: 'Invalid photo ID' });
+    }
+
     const photo = await photoService.getPhotoById(photoId);
 
     if (!photo) {
@@ -97,4 +102,21 @@ export const deletePhoto = asyncHandler(async (req: Request, res: Response) => {
     await photoService.deletePhoto(photoId, userId);
 
     res.status(200).json({ message: 'PHOTO_DELETED_SUCCESSFULLY' });
+});
+
+/**
+ * 사용자가 좋아요를 누른 사진 목록을 조회하는 컨트롤러 함수
+ * @param req Express의 Request 객체. `req.user`로 인증된 사용자 정보를 받습니다.
+ * @param res Express의 Response 객체. 조회된 사진 목록 또는 에러 메시지를 반환합니다.
+ */
+export const getLikedPhotos = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+    const likedPhotos = await photoService.getLikedPhotos(userId);
+
+    const photosWithLikeCount = likedPhotos.map(likedPhoto => ({
+        ...likedPhoto.photo,
+        likesCount: likedPhoto.photo._count.likes,
+    }));
+
+    res.status(200).json(photosWithLikeCount);
 });

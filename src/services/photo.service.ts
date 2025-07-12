@@ -70,8 +70,8 @@ export const getPhotos = async (sortBy: string) => {
  * @returns 사진, 작성자, 댓글(작성자 포함), 좋아요 정보를 포함하는 객체
  */
 export const getPhotoById = async (photoId: number) => {
-    return prisma.photo.findUnique({
-        where: { id: photoId, deletedAt: null, isPublic: true },
+    return prisma.photo.findFirst({
+        where: { id: { equals: photoId }, deletedAt: null, isPublic: true },
         include: {
             author: {
                 select: {
@@ -207,5 +207,39 @@ export const updatePhotoVisibility = async (photoId: number, userId: number, isP
     return prisma.photo.update({
         where: { id: photoId },
         data: { isPublic },
+    });
+};
+
+/**
+ * 사용자가 좋아요를 누른 사진 목록을 조회하는 서비스 함수
+ * @param userId 조회할 사용자의 ID
+ * @returns 사용자가 좋아요를 누른 사진 목록
+ */
+export const getLikedPhotos = async (userId: number) => {
+    return prisma.photoLike.findMany({
+        where: {
+            userId: userId,
+            photo: {
+                deletedAt: null, // 삭제되지 않은 사진만
+            },
+        },
+        include: {
+            photo: {
+                include: {
+                    author: {
+                        select: {
+                            id: true,
+                            username: true,
+                        },
+                    },
+                    _count: {
+                        select: { likes: true },
+                    },
+                },
+            },
+        },
+        orderBy: {
+            createdAt: 'desc',
+        },
     });
 };
