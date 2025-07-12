@@ -99,3 +99,31 @@ export const getCommentsByPhotoId = async (photoId: number) => {
 
     return rootComments;
 };
+
+/**
+ * 댓글을 소프트 삭제하는 서비스 함수
+ * @param commentId 삭제할 댓글의 ID
+ * @param userId 요청한 사용자의 ID
+ * @returns 업데이트된 댓글 객체
+ * @throws Error 댓글이 존재하지 않거나 권한이 없는 경우
+ */
+export const deleteComment = async (commentId: number, userId: number) => {
+    const comment = await prisma.comment.findUnique({
+        where: { id: commentId },
+    });
+
+    if (!comment) {
+        throw new Error('COMMENT_NOT_FOUND');
+    }
+
+    // 댓글 작성자와 요청한 사용자가 일치하는지 확인
+    if (comment.userId !== userId) {
+        throw new Error('UNAUTHORIZED_COMMENT_DELETION');
+    }
+
+    // deletedAt 필드를 현재 시간으로 업데이트하여 소프트 삭제
+    return prisma.comment.update({
+        where: { id: commentId },
+        data: { deletedAt: new Date() },
+    });
+};
