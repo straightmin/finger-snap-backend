@@ -7,7 +7,12 @@ export const getPhotos = asyncHandler(async (req: Request, res: Response) => {
     const sortBy = req.query.sortBy as string;
 
     const photos = await photoService.getPhotos(sortBy);
-    res.status(200).json(photos);
+    const photosWithLikeCount = photos.map(photo => ({
+        ...photo,
+        likesCount: photo._count.likes,
+    }));
+
+    res.status(200).json(photosWithLikeCount);
 });
 
 /**
@@ -24,7 +29,13 @@ export const getPhotoById = asyncHandler(async (req: Request, res: Response) => 
         return res.status(404).json({ message: 'PHOTO_NOT_FOUND' });
     }
 
-    res.status(200).json(photo);
+    const photoWithLikeCount = {
+        ...photo,
+        likesCount: photo._count.likes,
+    };
+    delete photoWithLikeCount._count;
+
+    res.status(200).json(photoWithLikeCount);
 });
 
 /**

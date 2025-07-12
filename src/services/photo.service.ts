@@ -25,10 +25,9 @@ export const getPhotos = async (sortBy: string) => {
         return prisma.photo.findMany({
             where: whereCondition,
             include: {
-                // 좋아요 수를 계산하기 위해 likes 관계를 포함시킵니다.
-                // 실제 좋아요 데이터를 모두 가져올 필요는 없으므로, select를 통해 필요한 정보만 제한할 수 있으나,
-                // 여기서는 _count를 위해 전체를 포함합니다.
-                likes: true,
+                _count: {
+                    select: { likes: true },
+                },
                 author: {
                     select: {
                         id: true,
@@ -48,6 +47,9 @@ export const getPhotos = async (sortBy: string) => {
         return prisma.photo.findMany({
             where: whereCondition,
             include: {
+                _count: {
+                    select: { likes: true },
+                },
                 author: {
                     select: {
                         id: true,
@@ -91,7 +93,9 @@ export const getPhotoById = async (photoId: number) => {
                     createdAt: 'desc',
                 },
             },
-            likes: true, // 좋아요 정보 포함
+            _count: {
+                select: { likes: true }, // 좋아요 수 포함
+            },
         },
     });
 };
