@@ -52,3 +52,50 @@ export const createComment = async (data: CreateCommentData) => {
         },
     });
 };
+
+/**
+ * 특정 사진의 댓글을 조회하는 서비스 함수
+ * @param photoId 조회할 사진의 ID
+ * @returns 계층적으로 구성된 댓글 목록
+ */
+export const getCommentsByPhotoId = async (photoId: number) => {
+    // 1. 해당 사진의 모든 댓글을 가져옵니다. (삭제되지 않은 댓글만)
+    const comments = await prisma.comment.findMany({
+        where: {
+            photoId,
+            deletedAt: null,
+        },
+        include: {
+            author: {
+                select: {
+                    id: true,
+                    username: true,
+                },
+            },
+        },
+        orderBy: {
+            createdAt: 'asc', // 시간 순으로 정렬
+        },
+    });
+
+    // 2. 댓글들을 계층적으로 구성합니다.
+    const commentMap = new Map<number, any>();
+    const rootComments: any[] = [];
+
+    comments.forEach(comment => {
+        commentMap.set(comment.id, { ...comment, replies: [] });
+    });
+
+    comments.forEach(comment => {
+        if (comment.parentId) {
+            const parent = commentMap.get(comment.parentId);
+            if (parent) {
+                parent.replies.push(commentMap.get(comment.id));
+            }
+        } else {
+            rootComments.push(commentMap.get(comment.id));
+        }
+    });
+
+    return rootComments;
+};
