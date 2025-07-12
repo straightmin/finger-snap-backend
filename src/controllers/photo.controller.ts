@@ -35,11 +35,11 @@ export const getPhotoById = asyncHandler(async (req: Request, res: Response) => 
         return;
     }
 
+    const { _count, ...photoWithoutCount } = photo;
     const photoWithLikeCount = {
-        ...photo,
-        likesCount: photo._count.likes,
+        ...photoWithoutCount,
+        likesCount: _count.likes,
     };
-    delete photoWithLikeCount._count;
 
     res.status(200).json(photoWithLikeCount);
 });

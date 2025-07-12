@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as commentService from '../services/comment.service';
+import { asyncHandler } from '../utils/asyncHandler';
 
 /**
  * 댓글을 작성하는 컨트롤러 함수
@@ -7,29 +8,25 @@ import * as commentService from '../services/comment.service';
  * @param res Express의 Response 객체. 생성된 댓글 정보 또는 에러 메시지를 반환합니다.
  * @param next Express의 NextFunction 객체. 에러 처리를 위해 사용됩니다.
  */
-export const createComment = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const photoId = parseInt(req.params.photoId, 10);
-        const { content, parentId } = req.body;
-        const userId = req.user!.id; // authenticateToken 미들웨어를 통해 req.user가 보장됨
+export const createComment = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const photoId = parseInt(req.params.photoId, 10);
+    const { content, parentId } = req.body;
+    const userId = req.user!.id; // authenticateToken 미들웨어를 통해 req.user가 보장됨
 
-        if (!content || content.trim() === '') {
-            res.status(400).json({ message: 'COMMENT_CONTENT_CANNOT_BE_EMPTY' });
-            return; // 명시적으로 함수 종료
-        }
-
-        const newComment = await commentService.createComment({
-            photoId,
-            userId,
-            content,
-            parentId: parentId ? parseInt(parentId, 10) : undefined,
-        });
-
-        res.status(201).json(newComment);
-    } catch (error) {
-        next(error);
+    if (!content || content.trim() === '') {
+        res.status(400).json({ message: 'COMMENT_CONTENT_CANNOT_BE_EMPTY' });
+        return; // 명시적으로 함수 종료
     }
-};
+
+    const newComment = await commentService.createComment({
+        photoId,
+        userId,
+        content,
+        parentId: parentId ? parseInt(parentId, 10) : undefined,
+    });
+
+    res.status(201).json(newComment);
+});
 
 /**
  * 특정 사진의 댓글을 조회하는 컨트롤러 함수
@@ -37,17 +34,13 @@ export const createComment = async (req: Request, res: Response, next: NextFunct
  * @param res Express의 Response 객체. 조회된 댓글 목록 또는 에러 메시지를 반환합니다.
  * @param next Express의 NextFunction 객체. 에러 처리를 위해 사용됩니다.
  */
-export const getCommentsByPhotoId = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const photoId = parseInt(req.params.photoId, 10);
+export const getCommentsByPhotoId = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const photoId = parseInt(req.params.photoId, 10);
 
-        const comments = await commentService.getCommentsByPhotoId(photoId);
+    const comments = await commentService.getCommentsByPhotoId(photoId);
 
-        res.status(200).json(comments);
-    } catch (error) {
-        next(error);
-    }
-};
+    res.status(200).json(comments);
+});
 
 /**
  * 댓글을 삭제하는 컨트롤러 함수
@@ -55,15 +48,11 @@ export const getCommentsByPhotoId = async (req: Request, res: Response, next: Ne
  * @param res Express의 Response 객체. 성공 메시지 또는 에러 메시지를 반환합니다.
  * @param next Express의 NextFunction 객체. 에러 처리를 위해 사용됩니다.
  */
-export const deleteComment = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const commentId = parseInt(req.params.commentId, 10);
-        const userId = req.user!.id; // authenticateToken 미들웨어를 통해 req.user가 보장됨
+export const deleteComment = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const commentId = parseInt(req.params.commentId, 10);
+    const userId = req.user!.id; // authenticateToken 미들웨어를 통해 req.user가 보장됨
 
-        await commentService.deleteComment(commentId, userId);
+    await commentService.deleteComment(commentId, userId);
 
-        res.status(200).json({ message: 'COMMENT_DELETED_SUCCESSFULLY' });
-    } catch (error) {
-        next(error);
-    }
-};
+    res.status(200).json({ message: 'COMMENT_DELETED_SUCCESSFULLY' });
+});
