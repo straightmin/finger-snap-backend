@@ -34,7 +34,8 @@ export const getPhotoById = async (req: Request, res: Response, next: NextFuncti
         const photo = await photoService.getPhotoById(photoId);
 
         if (!photo) {
-            return res.status(404).json({ message: 'PHOTO_NOT_FOUND' });
+            res.status(404).json({ message: 'PHOTO_NOT_FOUND' });
+            return;
         }
 
         res.status(200).json(photo);
@@ -86,7 +87,8 @@ export const updatePhotoVisibility = async (req: Request, res: Response, next: N
         const userId = req.user!.id;
 
         if (typeof isPublic !== 'boolean') {
-            return res.status(400).json({ message: 'IS_PUBLIC_FIELD_IS_REQUIRED_AND_MUST_BE_A_BOOLEAN' });
+            res.status(400).json({ message: 'IS_PUBLIC_FIELD_IS_REQUIRED_AND_MUST_BE_A_BOOLEAN' });
+            return;
         }
 
         const updatedPhoto = await photoService.updatePhotoVisibility(photoId, userId, isPublic);
