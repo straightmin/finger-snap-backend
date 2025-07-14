@@ -1,21 +1,20 @@
 // src/controllers/auth.controller.ts
+// Prisma Client 초기화 방식 통일을 위해 getPrismaClient 사용
+import { getPrismaClient } from "../services/prismaClient";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import prisma from "../lib/prisma";
 import { getMessage } from "../utils/messageMapper";
 import { generateToken } from "../utils/generateToken";
 import { asyncHandler } from "../utils/asyncHandler";
+
+const prisma = getPrismaClient();
 
 const healthCheck = {
     status: "ok",
     timestamp: new Date().toISOString(),
 };
 
-const myInfo = {
-    id: 1,
-    username: "straightmin",
-    email: "straightmin@gmail.com",
-};
+
 
 // register api
 export const register = asyncHandler(async (req: Request, res: Response) => {

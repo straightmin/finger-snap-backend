@@ -1,8 +1,12 @@
 // src/middlewares/auth.middleware.ts
+// Prisma Client 초기화 방식 통일을 위해 getPrismaClient 사용
+import { getPrismaClient } from "../services/prismaClient";
 import { Request, Response, RequestHandler, NextFunction } from 'express';
 import jwt from "jsonwebtoken";
-import prisma from "../lib/prisma"; // Prisma 클라이언트 임포트
 import { getMessage } from "../utils/messageMapper"; // 메시지 매퍼 임포트
+import config from '../config';
+
+const prisma = getPrismaClient();
 
 // Request 객체에 user 속성을 추가하기 위한 타입 확장
 declare global {
@@ -32,9 +36,7 @@ export const authenticateToken: RequestHandler = async (req: Request, res: Respo
 
     try {
         // 3. JWT 토큰 검증
-        // process.env.JWT_SECRET은 .env 파일에 정의된 JWT 비밀 키입니다.
-        // 실제 프로젝트에서는 이 비밀 키를 안전하게 관리해야 합니다.
-        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
+        const decoded = jwt.verify(token, config.JWT_SECRET) as {
             userid: number;
             email: string;
             username: string;
