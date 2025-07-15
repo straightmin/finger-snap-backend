@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.routes";
 import photoRoutes from "./routes/photo.routes";
 import likeRoutes from "./routes/like.routes";
 import commentRoutes from "./routes/comment.routes";
+import followRoutes from "./routes/follow.routes";
 import { errorHandler } from "./middlewares/errorHandler";
 
 dotenv.config(); // 환경 변수 로드
@@ -42,6 +43,9 @@ app.use("/api/photos", commentRoutes);
 
 // 좋아요 관련 라우트를 /api/likes 경로에 등록합니다.
 app.use("/api/likes", likeRoutes);
+
+// 팔로우 관련 라우트를 /api/users 경로에 등록합니다.
+app.use("/api/users", followRoutes);
 
 // 오류 처리 미들웨어
 app.use(errorHandler);
