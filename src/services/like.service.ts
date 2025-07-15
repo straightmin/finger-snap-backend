@@ -1,3 +1,4 @@
+import { getMessage } from '../utils/messageMapper';
 import { getPrismaClient } from './prismaClient';
 
 const prisma = getPrismaClient();
@@ -8,17 +9,17 @@ export const togglePhotoLike = async (userId: number, photoId: number) => {
   });
 
   if (!photo) {
-    throw new Error('Photo not found');
+    throw new Error(getMessage('PHOTO_NOT_FOUND'));
   }
 
   // 삭제된 사진에는 좋아요 불가
   if (photo.deletedAt) {
-    throw new Error('Photo is deleted');
+    throw new Error(getMessage('PHOTO_IS_DELETED'));
   }
 
   // 사진 소유자는 공개 여부와 상관없이 좋아요 가능
   if (photo.userId !== userId && !photo.isPublic) {
-    throw new Error('Photo is private');
+    throw new Error(getMessage('PHOTO_IS_PRIVATE'));
   }
 
   const existingLike = await prisma.photoLike.findUnique({
@@ -54,12 +55,12 @@ export const toggleCommentLike = async (userId: number, commentId: number) => {
   });
 
   if (!comment) {
-    throw new Error('Comment not found');
+    throw new Error(getMessage('COMMENT_NOT_FOUND'));
   }
 
   // 삭제된 댓글에는 좋아요 불가
   if (comment.deletedAt) {
-    throw new Error('Comment is deleted');
+    throw new Error(getMessage('COMMENT_IS_DELETED'));
   }
 
   const existingLike = await prisma.commentLike.findUnique({

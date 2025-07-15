@@ -3,6 +3,8 @@ import { PrismaClient } from '@prisma/client';
 import sharp from 'sharp';
 import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import s3Client, { bucketName } from '../lib/s3Client';
+import { getMessage } from '../utils/messageMapper';
+import config from '../config';
 
 // Prisma 클라이언트 인스턴스를 생성합니다.
 const prisma = new PrismaClient();
@@ -124,7 +126,7 @@ export const createPhoto = async (photoData: {
     }));
 
     if (!Body) {
-        throw new Error('Failed to get image from S3');
+        throw new Error(getMessage('FAILED_TO_GET_IMAGE_FROM_S3'));
     }
 
     const imageBuffer = await Body.transformToByteArray();
@@ -143,7 +145,8 @@ export const createPhoto = async (photoData: {
         Body: thumbnailBuffer,
         ContentType: 'image/jpeg',
     }));
-    const thumbnailUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${thumbnailKey}`;
+
+    const thumbnailUrl = `https://${bucketName}.s3.${config.AWS_REGION}.amazonaws.com/${thumbnailKey}`;
 
     // 5. DB에 원본 및 썸네일 URL 저장
     return prisma.photo.create({
@@ -170,11 +173,11 @@ export const deletePhoto = async (photoId: number, userId: number) => {
     });
 
     if (!photo) {
-        throw new Error('PHOTO_NOT_FOUND');
+        throw new Error(getMessage('PHOTO_NOT_FOUND'));
     }
 
     if (photo.userId !== userId) {
-        throw new Error('UNAUTHORIZED');
+        throw new Error(getMessage('UNAUTHORIZED'));
     }
 
     return prisma.photo.update({
@@ -197,11 +200,11 @@ export const updatePhotoVisibility = async (photoId: number, userId: number, isP
     });
 
     if (!photo) {
-        throw new Error('PHOTO_NOT_FOUND');
+        throw new Error(getMessage('PHOTO_NOT_FOUND'));
     }
 
     if (photo.userId !== userId) {
-        throw new Error('UNAUTHORIZED');
+        throw new Error(getMessage('UNAUTHORIZED'));
     }
 
     return prisma.photo.update({
