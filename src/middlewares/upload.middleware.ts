@@ -1,28 +1,26 @@
-import multer from 'multer';
-import multerS3 from 'multer-s3';
-import { S3Client } from '@aws-sdk/client-s3';
-import path from 'path';
-import config from '../config';
+import multer, { FileFilterCallback } from 'multer';
+import { Request } from 'express';
 
-const s3 = new S3Client({
-  region: config.AWS_REGION,
-  credentials: {
-    accessKeyId: config.AWS_ACCESS_KEY_ID,
-    secretAccessKey: config.AWS_SECRET_ACCESS_KEY,
-  },
-});
+// 허용할 파일 MIME 타입 정의
+const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+const fileFilter = (
+    req: Request,
+    file: Express.Multer.File,
+    cb: FileFilterCallback,
+) => {
+    if (allowedMimeTypes.includes(file.mimetype)) {
+        cb(null, true); // 허용
+    } else {
+        // @ts-ignore
+        cb(new Error('지원하지 않는 파일 형식입니다.'), false); // 거부
+    }
+};
 
 const upload = multer({
-  storage: multerS3({
-    s3: s3,
-    bucket: config.AWS_S3_BUCKET_NAME,
-    contentType: multerS3.AUTO_CONTENT_TYPE,
-    key: (req, file, cb) => {
-      const ext = path.extname(file.originalname);
-      cb(null, `photos/${Date.now().toString()}${ext}`);
-    },
-  }),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    storage: multer.memoryStorage(), // 파일을 메모리에 버퍼로 저장
+    fileFilter: fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
 export default upload;
