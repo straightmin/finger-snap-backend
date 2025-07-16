@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.routes";
 import photoRoutes from "./routes/photo.routes";
 import likeRoutes from "./routes/like.routes";
 import commentRoutes from "./routes/comment.routes";
+import collectionRoutes from "./routes/collection.routes"; // 추가
 import { errorHandler } from "./middlewares/errorHandler";
 import userRoutes from "./routes/user.routes";
 
@@ -40,9 +41,8 @@ app.use("/api/auth", authRoutes);
 
 // 사진 관련 라우트를 /api/photos 경로에 등록합니다.
 app.use("/api/photos", photoRoutes);
-
-// 댓글 관련 라우트를 /api/photos 경로에 등록합니다.
-app.use("/api/photos", commentRoutes);
+app.use("/api/photos", collectionRoutes);   // 컬렉션 라우트
+app.use("/api/photos", commentRoutes);      // 댓글 관련 라우트
 
 // 좋아요 관련 라우트를 /api/likes 경로에 등록합니다.
 app.use("/api/likes", likeRoutes);
