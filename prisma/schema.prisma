@@ -24,8 +24,23 @@ model User {
   notifications Notification[]
   photos        Photo[]
   series        Series[]
+  followers     Follow[] @relation("FollowedBy")
+  following     Follow[] @relation("Following")
 
   @@map("users")
+}
+
+// 팔로우 관계
+model Follow {
+  id          Int      @id @default(autoincrement())
+  follower    User     @relation("Following", fields: [followerId], references: [id])
+  followerId  Int
+  following   User     @relation("FollowedBy", fields: [followingId], references: [id])
+  followingId Int
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@map("follows")
 }
 
 /// 사진(게시물)
