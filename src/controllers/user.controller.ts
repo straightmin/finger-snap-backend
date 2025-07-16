@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import * as userService from '../services/user.service';
+import * as photoService from '../services/photo.service';
 
 export const getMyProfile = asyncHandler(async (req: Request, res: Response) => {
 
@@ -30,5 +31,17 @@ export const getMyPhotos = asyncHandler(async (req: Request, res: Response) => {
         ...photo,
         likesCount: photo._count.likes,
     }));
+    res.status(200).json(photosWithLikeCount);
+});
+
+export const getMyLikedPhotos = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+    const likedPhotos = await photoService.getLikedPhotos(userId);
+
+    const photosWithLikeCount = likedPhotos.map(likedPhoto => ({
+        ...likedPhoto.photo,
+        likesCount: likedPhoto.photo._count.likes,
+    }));
+
     res.status(200).json(photosWithLikeCount);
 });
