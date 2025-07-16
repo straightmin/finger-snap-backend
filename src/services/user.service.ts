@@ -11,16 +11,7 @@ export const getUserProfile = async (userId: number) => {
             username: true,
             email: true,
             bio: true,
-            photos: {
-                select: {
-                    id: true,
-                },
-            },
-            photoLikes: {
-                select: {
-                    id: true,
-                },
-            },
+            profileImageUrl: true, // profileImageUrl 필드 추가
         },
     });
 
@@ -28,24 +19,62 @@ export const getUserProfile = async (userId: number) => {
         throw new Error('User not found');
     }
 
-    // 사용자가 올린 사진 수
-    const uploadedPhotosCount = user.photos.length;
-
-    // 사용자가 받은 좋아요 수 (자신이 올린 사진에 달린 좋아요 수)
-    const receivedLikesCount = await prisma.photoLike.count({
-        where: {
-            photo: {
-                userId: userId,
-            },
-        },
-    });
-
+    // 응답 데이터 구조 변경
     return {
         id: user.id,
         username: user.username,
         email: user.email,
         bio: user.bio,
-        uploadedPhotosCount,
-        receivedLikesCount,
+        profileImageUrl: user.profileImageUrl,
     };
+};
+
+export const updateUserProfile = async (
+    userId: number,
+    profileData: {
+        username?: string;
+        email?: string; bio?: string; profileImageUrl?: string
+    }) => {
+    const { username, email, bio, profileImageUrl } = profileData;
+
+    const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+            username,
+            email,
+            bio,
+            profileImageUrl,
+        },
+        select: {
+            id: true,
+            username: true,
+            email: true,
+            bio: true,
+            profileImageUrl: true,
+        },
+    });
+
+    return updatedUser;
+};
+
+/**
+ * 특정 사용자가 업로드한 사진 목록을 조회하는 서비스 함수
+ * @param userId 조회할 사용자의 ID
+ * @returns 해당 사용자의 사진 목록 (최신순)
+ */
+export const getUserPhotos = async (userId: number) => {
+    return prisma.photo.findMany({
+        where: {
+            userId: userId,
+            deletedAt: null, // 삭제되지 않은 사진만
+        },
+        orderBy: {
+            createdAt: 'desc',
+        },
+        include: { // 각 사진의 좋아요 수를 포함
+            _count: {
+                select: { likes: true },
+            },
+        },
+    });
 };
