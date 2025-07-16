@@ -9,23 +9,24 @@ datasource db {
 
 /// 사용자
 model User {
-  id            Int            @id @default(autoincrement()) @map("id")
-  email         String         @unique @map("email")
-  passwordHash  String         @map("password_hash")
-  username      String         @map("username")
-  bio           String?        @map("bio")
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
-  deletedAt     DateTime?      @map("deleted_at")
-  collections   Collection[]
-  comments      Comment[]
-  photoLikes    PhotoLike[]
-  commentLikes  CommentLike[]
-  notifications Notification[]
-  photos        Photo[]
-  series        Series[]
-  followers     Follow[] @relation("FollowedBy")
-  following     Follow[] @relation("Following")
+  id              Int            @id @default(autoincrement()) @map("id")
+  email           String         @unique @map("email")
+  passwordHash    String         @map("password_hash")
+  username        String         @map("username")
+  bio             String?        @map("bio")
+  profileImageUrl String?        @map("profile_image_url")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  deletedAt       DateTime?      @map("deleted_at")
+  collections     Collection[]
+  comments        Comment[]
+  photoLikes      PhotoLike[]
+  commentLikes    CommentLike[]
+  notifications   Notification[]
+  photos          Photo[]
+  series          Series[]
+  followers       Follow[] @relation("FollowedBy")
+  following       Follow[] @relation("Following")
 
   @@map("users")
 }

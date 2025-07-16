@@ -6,13 +6,18 @@ import photoRoutes from "./routes/photo.routes";
 import likeRoutes from "./routes/like.routes";
 import commentRoutes from "./routes/comment.routes";
 import followRoutes from "./routes/follow.routes";
+import collectionRoutes from "./routes/collection.routes"; // 추가
 import { errorHandler } from "./middlewares/errorHandler";
+import userRoutes from "./routes/user.routes";
 
 // Express 애플리케이션을 생성합니다.
 const app = express();
 
 // JSON 요청 본문을 파싱하기 위한 미들웨어를 추가합니다.
 app.use(express.json());
+
+// 사용자 관련 라우트를 /api/users 경로에 등록합니다.
+app.use("/api/users", userRoutes);
 
 // 인증 관련 라우트를 /api/auth 경로에 등록합니다.
 app.use("/api/auth", authRoutes);
@@ -23,6 +28,8 @@ app.use("/api/photos", commentRoutes);
 
 // 사진 관련 라우트를 /api/photos 경로에 등록합니다.
 app.use("/api/photos", photoRoutes);
+app.use("/api/photos", collectionRoutes);   // 컬렉션 라우트
+app.use("/api/photos", commentRoutes);      // 댓글 관련 라우트
 
 // 좋아요 관련 라우트를 /api/likes 경로에 등록합니다.
 app.use("/api/likes", likeRoutes);
