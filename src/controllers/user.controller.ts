@@ -45,3 +45,9 @@ export const getMyLikedPhotos = asyncHandler(async (req: Request, res: Response)
 
     res.status(200).json(photosWithLikeCount);
 });
+
+export const deleteMyAccount = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+    await userService.deleteUser(userId);
+    res.status(200).json({ message: 'Account deleted successfully.' });
+});

@@ -78,3 +78,29 @@ export const getUserPhotos = async (userId: number) => {
         },
     });
 };
+
+/**
+ * 사용자를 소프트 삭제하는 서비스 함수 (deletedAt 필드 업데이트)
+ * @param userId 삭제할 사용자의 ID
+ * @returns 업데이트된 사용자 객체
+ */
+export const deleteUser = async (userId: number) => {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+    });
+
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    return prisma.user.update({
+        where: { id: userId },
+        data: { deletedAt: new Date() },
+        select: {
+            id: true,
+            username: true,
+            email: true,
+            deletedAt: true,
+        },
+    });
+};
