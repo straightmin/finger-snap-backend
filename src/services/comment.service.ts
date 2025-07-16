@@ -1,3 +1,4 @@
+import { getMessage } from '../utils/messageMapper';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -24,7 +25,7 @@ export const createComment = async (data: CreateCommentData) => {
     });
 
     if (!photo) {
-        throw new Error('PHOTO_NOT_FOUND');
+        throw new Error(getMessage('PHOTO_NOT_FOUND'));
     }
 
     // 2. 부모 댓글이 지정된 경우, 부모 댓글 존재 여부 확인
@@ -34,11 +35,11 @@ export const createComment = async (data: CreateCommentData) => {
         });
 
         if (!parentComment) {
-            throw new Error('PARENT_COMMENT_NOT_FOUND');
+            throw new Error(getMessage('PARENT_COMMENT_NOT_FOUND'));
         }
         // 부모 댓글의 photoId와 현재 댓글의 photoId가 일치하는지 확인 (선택 사항이지만 유효성 강화)
         if (parentComment.photoId !== photoId) {
-            throw new Error('PARENT_COMMENT_DOES_NOT_BELONG_TO_THIS_PHOTO');
+            throw new Error(getMessage('PARENT_COMMENT_DOES_NOT_BELONG_TO_THIS_PHOTO'));
         }
     }
 
@@ -113,12 +114,12 @@ export const deleteComment = async (commentId: number, userId: number) => {
     });
 
     if (!comment) {
-        throw new Error('COMMENT_NOT_FOUND');
+        throw new Error(getMessage('COMMENT_NOT_FOUND'));
     }
 
     // 댓글 작성자와 요청한 사용자가 일치하는지 확인
     if (comment.userId !== userId) {
-        throw new Error('UNAUTHORIZED_COMMENT_DELETION');
+        throw new Error(getMessage('UNAUTHORIZED_COMMENT_DELETION'));
     }
 
     // deletedAt 필드를 현재 시간으로 업데이트하여 소프트 삭제

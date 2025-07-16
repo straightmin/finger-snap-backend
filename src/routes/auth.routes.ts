@@ -10,8 +10,6 @@ import {
 } from "../controllers/auth.controller";
 import { authenticateToken } from "../middlewares/auth.middleware";
 
-console.log("DEBUG handlers:", { register, login, me, health, ping }); // ← import "뒤"
-
 const router = Router();
 router.post("/register", register);
 router.post("/login", login);

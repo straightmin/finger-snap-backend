@@ -1,8 +1,10 @@
 // src/services/photo.service.ts
 import { PrismaClient } from '@prisma/client';
 import sharp from 'sharp';
-import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 import s3Client, { bucketName } from '../lib/s3Client';
+import { getMessage } from '../utils/messageMapper';
+import config from '../config';
 
 // Prisma 클라이언트 인스턴스를 생성합니다.
 const prisma = new PrismaClient();
@@ -101,51 +103,61 @@ export const getPhotoById = async (photoId: number) => {
 };
 
 /**
- * 새로운 사진 데이터를 데이터베이스에 생성하는 서비스 함수
- * @param photoData 사진 생성에 필요한 데이터 (title, description, imageUrl, userId)
+ * 새로운 사진을 업로드하고 데이터베이스에 생성하는 서비스 함수
+ * @param photoData 사진 생성에 필요한 데이터 (title, description, file, userId)
  * @returns 생성된 사진 객체
  */
 export const createPhoto = async (photoData: {
     title?: string;
     description?: string;
-    imageUrl: string;
+    file: Express.Multer.File;
     userId: number;
 }) => {
-    const { title, description, imageUrl, userId } = photoData;
+    const { title, description, file, userId } = photoData;
 
-    // 1. imageUrl에서 S3 객체 키 추출
-    const urlParts = imageUrl.split('/');
-    const originalKey = urlParts.slice(3).join('/'); // "bucketName.s3.region.amazonaws.com/" 이후의 경로
+    // 1. 원본 이미지 리사이징
+    const image = sharp(file.buffer);
+    const metadata = await image.metadata();
+    const { width, height } = metadata;
 
-    // 2. S3에서 원본 이미지 스트림 가져오기
-    const { Body } = await s3Client.send(new GetObjectCommand({
-        Bucket: bucketName,
-        Key: originalKey,
-    }));
-
-    if (!Body) {
-        throw new Error('Failed to get image from S3');
+    let resizedBuffer = file.buffer;
+    if (width && height && (width > 1920 || height > 1920)) {
+        const resizeOptions = width > height ? { width: 1920 } : { height: 1920 };
+        resizedBuffer = await image.resize(resizeOptions).toBuffer();
     }
 
-    const imageBuffer = await Body.transformToByteArray();
-
-    // 3. sharp를 사용하여 썸네일 생성 (예시: 200x200)
-    const thumbnailBuffer = await sharp(imageBuffer)
-        .resize(200, 200, { fit: 'inside' })
-        .toFormat('jpeg')
+    // 2. 썸네일 생성
+    const thumbnailBuffer = await sharp(resizedBuffer)
+        .resize(300, 300, { fit: 'cover' })
         .toBuffer();
 
-    // 4. 썸네일을 S3에 업로드
-    const thumbnailKey = `thumbnails/${Date.now().toString()}-${originalKey.split('/').pop()}`;
-    await s3Client.send(new PutObjectCommand({
-        Bucket: bucketName,
-        Key: thumbnailKey,
-        Body: thumbnailBuffer,
-        ContentType: 'image/jpeg',
-    }));
-    const thumbnailUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${thumbnailKey}`;
+    // 3. 원본과 썸네일을 S3에 병렬로 업로드
+    const originalKey = `photos/${userId}/${Date.now()}-${file.originalname}`;
+    const thumbnailKey = `thumbnails/${userId}/${Date.now()}-${file.originalname}`;
 
-    // 5. DB에 원본 및 썸네일 URL 저장
+    const s3UploadParams = [
+        {
+            Bucket: bucketName,
+            Key: originalKey,
+            Body: resizedBuffer,
+            ContentType: file.mimetype,
+        },
+        {
+            Bucket: bucketName,
+            Key: thumbnailKey,
+            Body: thumbnailBuffer,
+            ContentType: 'image/jpeg', // 썸네일은 jpeg로 통일
+        },
+    ];
+
+    await Promise.all(
+        s3UploadParams.map(params => s3Client.send(new PutObjectCommand(params)))
+    );
+
+    const imageUrl = `https://${bucketName}.s3.${config.AWS_REGION}.amazonaws.com/${originalKey}`;
+    const thumbnailUrl = `https://${bucketName}.s3.${config.AWS_REGION}.amazonaws.com/${thumbnailKey}`;
+
+    // 4. DB에 사진 정보 저장
     return prisma.photo.create({
         data: {
             title: title || 'Untitled',
@@ -170,11 +182,11 @@ export const deletePhoto = async (photoId: number, userId: number) => {
     });
 
     if (!photo) {
-        throw new Error('PHOTO_NOT_FOUND');
+        throw new Error(getMessage('PHOTO_NOT_FOUND'));
     }
 
     if (photo.userId !== userId) {
-        throw new Error('UNAUTHORIZED');
+        throw new Error(getMessage('UNAUTHORIZED'));
     }
 
     return prisma.photo.update({
@@ -197,11 +209,11 @@ export const updatePhotoVisibility = async (photoId: number, userId: number, isP
     });
 
     if (!photo) {
-        throw new Error('PHOTO_NOT_FOUND');
+        throw new Error(getMessage('PHOTO_NOT_FOUND'));
     }
 
     if (photo.userId !== userId) {
-        throw new Error('UNAUTHORIZED');
+        throw new Error(getMessage('UNAUTHORIZED'));
     }
 
     return prisma.photo.update({

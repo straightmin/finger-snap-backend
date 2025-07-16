@@ -1,5 +1,8 @@
 // src/test/prismaPing.ts
-import prisma from '../lib/prisma';
+// Prisma Client 초기화 방식 통일을 위해 getPrismaClient 사용
+import { getPrismaClient } from '../services/prismaClient';
+
+const prisma = getPrismaClient();
 
 async function main() {
   const users = await prisma.user.findMany();

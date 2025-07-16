@@ -4,5 +4,15 @@
     "ERROR.MISSING_FIELDS": "필수 입력란이 누락되었습니다.",
     "ERROR.PASSWORD_TOO_SHORT": "비밀번호는 최소 8자 이상이어야 합니다.",
     "SUCCESS.REGISTER": "회원가입이 완료되었습니다.",
-    "SUCCESS.LOGOUT": "로그아웃되었습니다."
+    "SUCCESS.LOGOUT": "로그아웃되었습니다.",
+    "PHOTO_NOT_FOUND": "사진을 찾을 수 없습니다.",
+    "PHOTO_IS_DELETED": "삭제된 사진입니다.",
+    "PHOTO_IS_PRIVATE": "비공개 사진입니다.",
+    "COMMENT_NOT_FOUND": "댓글을 찾을 수 없습니다.",
+    "COMMENT_IS_DELETED": "삭제된 댓글입니다.",
+    "PARENT_COMMENT_NOT_FOUND": "상위 댓글을 찾을 수 없습니다.",
+    "PARENT_COMMENT_DOES_NOT_BELONG_TO_THIS_PHOTO": "상위 댓글이 이 사진에 속해있지 않습니다.",
+    "UNAUTHORIZED_COMMENT_DELETION": "이 댓글을 삭제할 권한이 없습니다.",
+    "FAILED_TO_GET_IMAGE_FROM_S3": "S3에서 이미지를 가져오는데 실패했습니다.",
+    "UNAUTHORIZED": "이 작업을 수행할 권한이 없습니다."
 }
