@@ -6,7 +6,7 @@ import photoRoutes from "./routes/photo.routes";
 import likeRoutes from "./routes/like.routes";
 import commentRoutes from "./routes/comment.routes";
 import followRoutes from "./routes/follow.routes";
-import collectionsRoutes from "./routes/collections.routes"; // 새로 추가
+import collectionRoutes from "./routes/collection.routes"; // 새로 추가
 import { errorHandler } from "./middlewares/errorHandler";
 import userRoutes from "./routes/user.routes";
 
@@ -30,7 +30,7 @@ app.use("/api/photos", commentRoutes);
 app.use("/api/photos", photoRoutes);
 
 // 컬렉션 관련 라우트를 /api/collections 경로에 등록합니다.
-app.use("/api/collections", collectionsRoutes);
+app.use("/api/collections", collectionRoutes);
 
 // 좋아요 관련 라우트를 /api/likes 경로에 등록합니다.
 app.use("/api/likes", likeRoutes);

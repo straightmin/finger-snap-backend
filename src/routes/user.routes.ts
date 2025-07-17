@@ -1,7 +1,7 @@
 // src/routes/user.routes.ts
 import { Router } from 'express';
 import { authenticateToken } from '../middlewares/auth.middleware';
-import { getMyCollections } from '../controllers/collection.controller';
+import { getMyCollections, getUserCollections } from '../controllers/collection.controller';
 import {
     getMyProfile,
     updateMyProfile,
@@ -18,6 +18,7 @@ router.get('/me/photos', authenticateToken, getMyPhotos);
 router.get('/me/likes', authenticateToken, getMyLikedPhotos);
 router.delete('/me', authenticateToken, deleteMyAccount);
 
+router.get('/me/collections', authenticateToken, getUserCollections);
 router.get('/me/collections/default', authenticateToken, getMyCollections);
 
 export default router;
