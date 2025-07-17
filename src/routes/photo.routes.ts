@@ -1,5 +1,6 @@
 // src/routes/photo.routes.ts
 import { Router } from 'express';
+import { toggleCollection } from '../controllers/collection.controller';
 import {
     getPhotos,
     uploadPhoto,
@@ -41,6 +42,10 @@ router.patch('/:id/visibility', authenticateToken, updatePhotoVisibility);
 // 특정 ID의 사진을 삭제하는 라우트입니다.
 // 인증된 사용자만 자신의 사진을 삭제할 수 있습니다.
 router.delete('/:id', authenticateToken, deletePhoto);
+
+// POST /api/photos/:photoId/toggle-collection
+// 특정 사진을 '기본 컬렉션'에 추가/제거하는 라우트입니다.
+router.post('/:photoId/toggle-collection', authenticateToken, toggleCollection);
 
 // 설정된 라우터를 모듈 외부로 내보냅니다.
 export default router;
