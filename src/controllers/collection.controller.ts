@@ -1,3 +1,4 @@
+// src/controllers/collection.controller.ts
 import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import * as collectionService from '../services/collection.service';
@@ -33,4 +34,192 @@ export const getMyCollections = asyncHandler(async (req: Request, res: Response)
     }));
 
     res.status(200).json(photosWithLikeCount);
+});
+
+/**
+ * 새로운 컬렉션을 생성하는 컨트롤러 함수
+ * POST /api/collections
+ */
+export const createCollection = asyncHandler(async (req: Request, res: Response) => {
+    const { title, description } = req.body;
+    const userId = req.user!.id;
+
+    if (!title) {
+        res.status(400).json({ message: 'Collection title is required' });
+        return;
+    }
+
+    const collection = await collectionService.createCollection(userId, title, description);
+    res.status(201).json(collection);
+});
+
+/**
+ * 현재 로그인된 사용자의 모든 컬렉션 목록을 조회하는 컨트롤러 함수
+ * GET /api/collections
+ */
+export const getUserCollections = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+    const collections = await collectionService.getUserCollections(userId);
+    res.status(200).json(collections);
+});
+
+/**
+ * 특정 컬렉션의 상세 정보를 조회하는 컨트롤러 함수
+ * GET /api/collections/:id
+ */
+export const getCollectionById = asyncHandler(async (req: Request, res: Response) => {
+    const collectionId = parseInt(req.params.id, 10);
+
+    if (isNaN(collectionId)) {
+        res.status(400).json({ message: 'Invalid collection ID' });
+        return;
+    }
+
+    const collection = await collectionService.getCollectionDetails(collectionId);
+
+    if (!collection) {
+        res.status(404).json({ message: 'Collection not found' });
+        return;
+    }
+
+    res.status(200).json(collection);
+});
+
+/**
+ * 컬렉션 정보를 수정하는 컨트롤러 함수
+ * PUT /api/collections/:id
+ */
+export const updateCollection = asyncHandler(async (req: Request, res: Response) => {
+    const collectionId = parseInt(req.params.id, 10);
+    const { title, description } = req.body;
+    const userId = req.user!.id;
+
+    if (isNaN(collectionId)) {
+        res.status(400).json({ message: 'Invalid collection ID' });
+        return;
+    }
+
+    if (!title) {
+        res.status(400).json({ message: 'Collection title is required' });
+        return;
+    }
+
+    const collection = await collectionService.getCollectionDetails(collectionId);
+
+    if (!collection) {
+        res.status(404).json({ message: 'Collection not found' });
+        return;
+    }
+
+    if (collection.userId !== userId) {
+        res.status(403).json({ message: 'You are not authorized to update this collection' });
+        return;
+    }
+
+    const updatedCollection = await collectionService.updateCollection(collectionId, title, description);
+    res.status(200).json(updatedCollection);
+});
+
+/**
+ * 컬렉션을 삭제하는 컨트롤러 함수
+ * DELETE /api/collections/:id
+ */
+export const deleteCollection = asyncHandler(async (req: Request, res: Response) => {
+    const collectionId = parseInt(req.params.id, 10);
+    const userId = req.user!.id;
+
+    if (isNaN(collectionId)) {
+        res.status(400).json({ message: 'Invalid collection ID' });
+        return;
+    }
+
+    const collection = await collectionService.getCollectionDetails(collectionId);
+
+    if (!collection) {
+        res.status(404).json({ message: 'Collection not found' });
+        return;
+    }
+
+    if (collection.userId !== userId) {
+        res.status(403).json({ message: 'You are not authorized to delete this collection' });
+        return;
+    }
+
+    await collectionService.deleteCollection(collectionId);
+    res.status(204).send();
+});
+
+/**
+ * 컬렉션에 사진을 추가하는 컨트롤러 함수
+ * POST /api/collections/:collectionId/photos/:photoId
+ */
+export const addPhotoToCollection = asyncHandler(async (req: Request, res: Response) => {
+    const { collectionId, photoId } = req.params;
+    const userId = req.user!.id;
+
+    const collectionIdNum = parseInt(collectionId, 10);
+    const photoIdNum = parseInt(photoId, 10);
+
+    if (isNaN(collectionIdNum) || isNaN(photoIdNum)) {
+        res.status(400).json({ message: 'Invalid ID' });
+        return;
+    }
+
+    const collection = await collectionService.getCollectionDetails(collectionIdNum);
+
+    if (!collection) {
+        res.status(404).json({ message: 'Collection not found' });
+        return;
+    }
+
+    if (collection.userId !== userId) {
+        res.status(403).json({ message: 'You are not authorized to add photos to this collection' });
+        return;
+    }
+
+    const result = await collectionService.addPhotoToCollection(collectionIdNum, photoIdNum);
+
+    if (!result) {
+        res.status(409).json({ message: 'Photo already exists in the collection' });
+        return;
+    }
+
+    res.status(201).json(result);
+});
+
+/**
+ * 컬렉션에서 사진을 제거하는 컨트롤러 함수
+ * DELETE /api/collections/:collectionId/photos/:photoId
+ */
+export const removePhotoFromCollection = asyncHandler(async (req: Request, res: Response) => {
+    const { collectionId, photoId } = req.params;
+    const userId = req.user!.id;
+
+    const collectionIdNum = parseInt(collectionId, 10);
+    const photoIdNum = parseInt(photoId, 10);
+
+    if (isNaN(collectionIdNum) || isNaN(photoIdNum)) {
+        res.status(400).json({ message: 'Invalid ID' });
+        return;
+    }
+
+    const collection = await collectionService.getCollectionDetails(collectionIdNum);
+
+    if (!collection) {
+        res.status(404).json({ message: 'Collection not found' });
+        return;
+    }
+
+    if (collection.userId !== userId) {
+        res.status(403).json({ message: 'You are not authorized to remove photos from this collection' });
+        return;
+    }
+
+    try {
+        await collectionService.removePhotoFromCollection(collectionIdNum, photoIdNum);
+        res.status(204).send();
+    } catch (error) {
+        // Prisma의 P2025 코드는 레코드를 찾지 못했을 때 발생합니다.
+        res.status(404).json({ message: 'Photo not found in the collection' });
+    }
 });
