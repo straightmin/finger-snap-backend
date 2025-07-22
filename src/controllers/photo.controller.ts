@@ -114,10 +114,8 @@ export const getLikedPhotos = asyncHandler(async (req: Request, res: Response) =
     const userId = req.user!.id;
     const likedPhotos = await photoService.getLikedPhotos(userId);
 
-    const photosWithLikeCount = likedPhotos.map(likedPhoto => ({
-        ...likedPhoto.photo,
-        likesCount: likedPhoto.photo._count.likes,
-    }));
+    // getLikedPhotos가 Like 객체 배열을 반환하므로, 각 Like에서 photo 정보를 추출합니다.
+    const photos = likedPhotos.map(like => like.photo).filter(photo => photo !== null);
 
-    res.status(200).json(photosWithLikeCount);
+    res.status(200).json(photos);
 });

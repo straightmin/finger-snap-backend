@@ -8,6 +8,7 @@ import commentRoutes from "./routes/comment.routes";
 import followRoutes from "./routes/follow.routes";
 import collectionRoutes from "./routes/collection.routes"; // 추가
 import seriesRoutes from "./routes/series.routes";
+import notificationRoutes from "./routes/notification.routes";
 import { errorHandler } from "./middlewares/errorHandler";
 import userRoutes from "./routes/user.routes";
 
@@ -41,6 +42,9 @@ app.use("/api/likes", likeRoutes);
 
 // 팔로우 관련 라우트를 /api/users 경로에 등록합니다.
 app.use("/api/users", followRoutes);
+
+// 알림 관련 라우트를 /api/notifications 경로에 등록합니다.
+app.use("/api/notifications", notificationRoutes);
 
 // 오류 처리 미들웨어
 app.use(errorHandler);

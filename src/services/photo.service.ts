@@ -228,11 +228,13 @@ export const updatePhotoVisibility = async (photoId: number, userId: number, isP
  * @returns 사용자가 좋아요를 누른 사진 목록
  */
 export const getLikedPhotos = async (userId: number) => {
-    return prisma.photoLike.findMany({
+    return prisma.like.findMany({
         where: {
             userId: userId,
+            photoId: { not: null }, // 사진에 대한 좋아요만 필터링
             photo: {
                 deletedAt: null, // 삭제되지 않은 사진만
+                isPublic: true, // 공개된 사진만
             },
         },
         include: {
