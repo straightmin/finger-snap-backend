@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 // Helper function to check access rights for a resource (photo or series)
 // 리소스(사진 또는 시리즈)에 대한 접근 권한을 확인하는 헬퍼 함수
-const checkAccess = async (userId: number, photoId?: number, seriesId?: number) => {
+const checkAccess = async (userId: number | undefined, photoId?: number, seriesId?: number) => {
     if (photoId) {
         const photo = await prisma.photo.findUnique({ where: { id: photoId } });
         if (!photo || photo.deletedAt) throw new Error(getMessage('PHOTO_NOT_FOUND'));
@@ -79,7 +79,7 @@ export const getComments = async (userId: number | undefined, target: { photoId?
     const { photoId, seriesId } = target;
     // If user is not logged in, they can only see public content. If logged in, they can see their own private content.
     // 유저가 로그인하지 않은 경우, 공개된 콘텐츠만 볼 수 있습니다. 로그인한 경우 자신의 비공개 콘텐츠도 볼 수 있습니다.
-    await checkAccess(userId || -1, photoId, seriesId);
+    await checkAccess(userId, photoId, seriesId);
 
     const whereClause = photoId ? { photoId, deletedAt: null } : { seriesId, deletedAt: null };
 

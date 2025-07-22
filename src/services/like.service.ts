@@ -50,7 +50,8 @@ export const toggleLike = async (userId: number, target: LikeTarget) => {
 
     if (existingLike) {
         await prisma.like.delete({ where: { id: existingLike.id } });
-        return { message: `Resource unliked`, liked: false };
+        const targetType = photoId ? 'Photo' : seriesId ? 'Series' : 'Comment';
+        return { message: `${targetType} unliked`, liked: false };
     } else {
         const newLike = await prisma.like.create({
             data: { userId, ...target },
@@ -64,6 +65,7 @@ export const toggleLike = async (userId: number, target: LikeTarget) => {
             ...target,
         });
 
-        return { message: `Resource liked`, liked: true };
+        const targetType = photoId ? 'Photo' : seriesId ? 'Series' : 'Comment';
+        return { message: `${targetType} liked`, liked: true };
     }
 };
