@@ -4,6 +4,24 @@ import * as notificationService from './notification.service';
 
 const prisma = new PrismaClient();
 
+// Helper function to check access rights for a resource (photo or series)
+// 리소스(사진 또는 시리즈)에 대한 접근 권한을 확인하는 헬퍼 함수
+const checkAccess = async (userId: number, photoId?: number, seriesId?: number) => {
+    if (photoId) {
+        const photo = await prisma.photo.findUnique({ where: { id: photoId } });
+        if (!photo || photo.deletedAt) throw new Error(getMessage('PHOTO_NOT_FOUND'));
+        if (!photo.isPublic && photo.userId !== userId) throw new Error(getMessage('PHOTO_IS_PRIVATE'));
+        return { ownerId: photo.userId };
+    } else if (seriesId) {
+        const series = await prisma.series.findUnique({ where: { id: seriesId } });
+        if (!series || series.deletedAt) throw new Error(getMessage('SERIES_NOT_FOUND'));
+        if (!series.isPublic && series.userId !== userId) throw new Error(getMessage('SERIES_IS_PRIVATE'));
+        return { ownerId: series.userId };
+    } else {
+        throw new Error('Either photoId or seriesId must be provided');
+    }
+};
+
 interface CreateCommentData {
     userId: number;
     content: string;
@@ -15,19 +33,7 @@ interface CreateCommentData {
 export const createComment = async (data: CreateCommentData) => {
     const { userId, content, parentId, photoId, seriesId } = data;
 
-    let targetOwnerId: number | undefined;
-
-    if (photoId) {
-        const photo = await prisma.photo.findUnique({ where: { id: photoId, deletedAt: null }, select: { userId: true } });
-        if (!photo) throw new Error(getMessage('PHOTO_NOT_FOUND'));
-        targetOwnerId = photo.userId;
-    } else if (seriesId) {
-        const series = await prisma.series.findUnique({ where: { id: seriesId }, select: { userId: true } });
-        if (!series) throw new Error(getMessage('SERIES_NOT_FOUND'));
-        targetOwnerId = series.userId;
-    } else {
-        throw new Error(getMessage('INVALID_COMMENT_TARGET'));
-    }
+    const { ownerId } = await checkAccess(userId, photoId, seriesId);
 
     if (parentId) {
         const parentComment = await prisma.comment.findUnique({ where: { id: parentId, deletedAt: null } });
@@ -42,21 +48,19 @@ export const createComment = async (data: CreateCommentData) => {
     });
 
     // Notify content owner
-    if (targetOwnerId) {
-        await notificationService.createNotification({
-            userId: targetOwnerId,
-            actorId: userId,
-            eventType: 'NEW_COMMENT',
-            commentId: newComment.id,
-            photoId,
-            seriesId,
-        });
-    }
+    await notificationService.createNotification({
+        userId: ownerId,
+        actorId: userId,
+        eventType: 'NEW_COMMENT',
+        commentId: newComment.id,
+        photoId,
+        seriesId,
+    });
 
     // Notify parent comment owner
     if (parentId) {
         const parentComment = await prisma.comment.findUnique({ where: { id: parentId }, select: { userId: true } });
-        if (parentComment && parentComment.userId !== targetOwnerId) {
+        if (parentComment && parentComment.userId !== userId && parentComment.userId !== ownerId) {
             await notificationService.createNotification({
                 userId: parentComment.userId,
                 actorId: userId,
@@ -71,8 +75,12 @@ export const createComment = async (data: CreateCommentData) => {
     return newComment;
 };
 
-export const getComments = async (target: { photoId?: number; seriesId?: number }) => {
+export const getComments = async (userId: number | undefined, target: { photoId?: number; seriesId?: number }) => {
     const { photoId, seriesId } = target;
+    // If user is not logged in, they can only see public content. If logged in, they can see their own private content.
+    // 유저가 로그인하지 않은 경우, 공개된 콘텐츠만 볼 수 있습니다. 로그인한 경우 자신의 비공개 콘텐츠도 볼 수 있습니다.
+    await checkAccess(userId || -1, photoId, seriesId);
+
     const whereClause = photoId ? { photoId, deletedAt: null } : { seriesId, deletedAt: null };
 
     const comments = await prisma.comment.findMany({

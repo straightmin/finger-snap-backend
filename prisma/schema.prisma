@@ -187,6 +187,7 @@ model Series {
   isPublic     Boolean       @default(true) @map("is_public")
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
+  deletedAt    DateTime?     @map("deleted_at")
   author       User          @relation(fields: [userId], references: [id])
   coverPhoto   Photo?        @relation("SeriesCover", fields: [coverPhotoId], references: [id])
   photos       SeriesPhoto[] @relation("SeriesToPhoto")
