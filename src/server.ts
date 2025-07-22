@@ -25,7 +25,7 @@ app.use("/api/auth", authRoutes);
 
 // 댓글 관련 라우트를 /api/photos 경로에 등록합니다.
 // photoRoutes보다 먼저 등록해야 라우팅 충돌을 방지할 수 있습니다.
-app.use("/api/photos", commentRoutes);
+app.use("/api", commentRoutes);
 
 // 사진 관련 라우트를 /api/photos 경로에 등록합니다.
 app.use("/api/photos", photoRoutes);

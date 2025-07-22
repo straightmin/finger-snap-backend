@@ -1,85 +1,89 @@
 import { getMessage } from '../utils/messageMapper';
 import { PrismaClient } from '@prisma/client';
+import * as notificationService from './notification.service';
 
 const prisma = new PrismaClient();
 
 interface CreateCommentData {
-    photoId: number;
     userId: number;
     content: string;
     parentId?: number;
+    photoId?: number;
+    seriesId?: number;
 }
 
-/**
- * 새로운 댓글을 데이터베이스에 생성하는 서비스 함수
- * @param data 댓글 생성에 필요한 데이터 (photoId, userId, content, parentId)
- * @returns 생성된 댓글 객체
- * @throws Error 사진이 존재하지 않거나 부모 댓글이 존재하지 않는 경우
- */
 export const createComment = async (data: CreateCommentData) => {
-    const { photoId, userId, content, parentId } = data;
+    const { userId, content, parentId, photoId, seriesId } = data;
 
-    // 1. 사진 존재 여부 확인
-    const photo = await prisma.photo.findUnique({
-        where: { id: photoId, deletedAt: null },
-    });
+    let targetOwnerId: number | undefined;
 
-    if (!photo) {
-        throw new Error(getMessage('PHOTO_NOT_FOUND'));
+    if (photoId) {
+        const photo = await prisma.photo.findUnique({ where: { id: photoId, deletedAt: null }, select: { userId: true } });
+        if (!photo) throw new Error(getMessage('PHOTO_NOT_FOUND'));
+        targetOwnerId = photo.userId;
+    } else if (seriesId) {
+        const series = await prisma.series.findUnique({ where: { id: seriesId }, select: { userId: true } });
+        if (!series) throw new Error(getMessage('SERIES_NOT_FOUND'));
+        targetOwnerId = series.userId;
+    } else {
+        throw new Error(getMessage('INVALID_COMMENT_TARGET'));
     }
 
-    // 2. 부모 댓글이 지정된 경우, 부모 댓글 존재 여부 확인
     if (parentId) {
-        const parentComment = await prisma.comment.findUnique({
-            where: { id: parentId, deletedAt: null },
-        });
-
-        if (!parentComment) {
-            throw new Error(getMessage('PARENT_COMMENT_NOT_FOUND'));
-        }
-        // 부모 댓글의 photoId와 현재 댓글의 photoId가 일치하는지 확인 (선택 사항이지만 유효성 강화)
-        if (parentComment.photoId !== photoId) {
-            throw new Error(getMessage('PARENT_COMMENT_DOES_NOT_BELONG_TO_THIS_PHOTO'));
+        const parentComment = await prisma.comment.findUnique({ where: { id: parentId, deletedAt: null } });
+        if (!parentComment) throw new Error(getMessage('PARENT_COMMENT_NOT_FOUND'));
+        if ((photoId && parentComment.photoId !== photoId) || (seriesId && parentComment.seriesId !== seriesId)) {
+            throw new Error(getMessage('PARENT_COMMENT_DOES_NOT_BELONG_TO_THIS_RESOURCE'));
         }
     }
 
-    // 3. 댓글 생성
-    return prisma.comment.create({
-        data: {
-            photoId,
-            userId,
-            content,
-            parentId,
-        },
+    const newComment = await prisma.comment.create({
+        data: { userId, content, parentId, photoId, seriesId },
     });
+
+    // Notify content owner
+    if (targetOwnerId) {
+        await notificationService.createNotification({
+            userId: targetOwnerId,
+            actorId: userId,
+            eventType: 'NEW_COMMENT',
+            commentId: newComment.id,
+            photoId,
+            seriesId,
+        });
+    }
+
+    // Notify parent comment owner
+    if (parentId) {
+        const parentComment = await prisma.comment.findUnique({ where: { id: parentId }, select: { userId: true } });
+        if (parentComment && parentComment.userId !== targetOwnerId) {
+            await notificationService.createNotification({
+                userId: parentComment.userId,
+                actorId: userId,
+                eventType: 'NEW_REPLY',
+                commentId: newComment.id,
+                photoId,
+                seriesId,
+            });
+        }
+    }
+
+    return newComment;
 };
 
-/**
- * 특정 사진의 댓글을 조회하는 서비스 함수
- * @param photoId 조회할 사진의 ID
- * @returns 계층적으로 구성된 댓글 목록
- */
-export const getCommentsByPhotoId = async (photoId: number) => {
-    // 1. 해당 사진의 모든 댓글을 가져옵니다. (삭제되지 않은 댓글만)
+export const getComments = async (target: { photoId?: number; seriesId?: number }) => {
+    const { photoId, seriesId } = target;
+    const whereClause = photoId ? { photoId, deletedAt: null } : { seriesId, deletedAt: null };
+
     const comments = await prisma.comment.findMany({
-        where: {
-            photoId,
-            deletedAt: null,
-        },
+        where: whereClause,
         include: {
-            author: {
-                select: {
-                    id: true,
-                    username: true,
-                },
-            },
+            author: { select: { id: true, username: true, profileImageUrl: true } },
+            likes: { select: { userId: true } },
         },
-        orderBy: {
-            createdAt: 'asc', // 시간 순으로 정렬
-        },
+        orderBy: { createdAt: 'asc' },
     });
 
-    // 2. 댓글들을 계층적으로 구성합니다.
     const commentMap = new Map<number, any>();
     const rootComments: any[] = [];
 
@@ -101,13 +105,6 @@ export const getCommentsByPhotoId = async (photoId: number) => {
     return rootComments;
 };
 
-/**
- * 댓글을 소프트 삭제하는 서비스 함수
- * @param commentId 삭제할 댓글의 ID
- * @param userId 요청한 사용자의 ID
- * @returns 업데이트된 댓글 객체
- * @throws Error 댓글이 존재하지 않거나 권한이 없는 경우
- */
 export const deleteComment = async (commentId: number, userId: number) => {
     const comment = await prisma.comment.findUnique({
         where: { id: commentId },
@@ -117,12 +114,10 @@ export const deleteComment = async (commentId: number, userId: number) => {
         throw new Error(getMessage('COMMENT_NOT_FOUND'));
     }
 
-    // 댓글 작성자와 요청한 사용자가 일치하는지 확인
     if (comment.userId !== userId) {
         throw new Error(getMessage('UNAUTHORIZED_COMMENT_DELETION'));
     }
 
-    // deletedAt 필드를 현재 시간으로 업데이트하여 소프트 삭제
     return prisma.comment.update({
         where: { id: commentId },
         data: { deletedAt: new Date() },

@@ -1,5 +1,6 @@
 // src/services/follow.service.ts
 import { getPrismaClient } from './prismaClient';
+import * as notificationService from './notification.service';
 
 // Prisma 클라이언트 인스턴스를 생성합니다.
 const prisma = getPrismaClient();
@@ -11,32 +12,30 @@ const prisma = getPrismaClient();
  * @returns 팔로우 정보
  */
 export const followUser = async (followerId: number, followingId: number) => {
-    // 팔로우할 사용자와 팔로워가 동일한 경우 예외 처리
     if (followerId === followingId) {
         throw new Error('CANNOT_FOLLOW_YOURSELF');
     }
 
     const existingFollow = await prisma.follow.findUnique({
-        where: {
-            followerId_followingId: {
-                followerId,
-                followingId,
-            },
-        },
+        where: { followerId_followingId: { followerId, followingId } },
     });
 
-    // 이미 팔로우 중인 경우 예외 처리
     if (existingFollow) {
         throw new Error('ALREADY_FOLLOWING_THIS_USER');
     }
 
-    // 팔로우 생성
-    return prisma.follow.create({
-        data: {
-            followerId,
-            followingId,
-        },
+    const newFollow = await prisma.follow.create({
+        data: { followerId, followingId },
     });
+
+    await notificationService.createNotification({
+        userId: followingId,
+        actorId: followerId,
+        eventType: 'FOLLOW',
+        followId: newFollow.id,
+    });
+
+    return newFollow;
 };
 
 /**
