@@ -26,7 +26,7 @@ export const createComment = async (data: CreateCommentData) => {
         if (!series) throw new Error(getMessage('SERIES_NOT_FOUND'));
         targetOwnerId = series.userId;
     } else {
-        throw new Error('Either photoId or seriesId must be provided');
+        throw new Error(getMessage('INVALID_COMMENT_TARGET'));
     }
 
     if (parentId) {
