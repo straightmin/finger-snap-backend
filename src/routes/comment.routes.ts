@@ -13,6 +13,6 @@ router.post('/series/:seriesId/comments', authenticateToken, createComment);
 router.get('/series/:seriesId/comments', getComments);
 
 // General
-router.delete('/:commentId', authenticateToken, deleteComment);
+router.delete('/comments/:commentId', authenticateToken, deleteComment);
 
 export default router;
