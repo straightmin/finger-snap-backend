@@ -32,10 +32,29 @@ export const toggleLike = async (userId: number, target: LikeTarget) => {
         throw new Error('Invalid like target');
     }
 
-    const existingTarget = await (prisma[targetType] as any).findUnique({
-        where: targetWhere,
-        select: { userId: true, deletedAt: true, isPublic: true },
-    });
+    let existingTarget;
+    switch (targetType) {
+        case 'photo':
+            existingTarget = await prisma.photo.findUnique({
+                where: targetWhere,
+                select: { userId: true, deletedAt: true, isPublic: true },
+            });
+            break;
+        case 'series':
+            existingTarget = await prisma.series.findUnique({
+                where: targetWhere,
+                select: { userId: true, deletedAt: true, isPublic: true },
+            });
+            break;
+        case 'comment':
+            existingTarget = await prisma.comment.findUnique({
+                where: targetWhere,
+                select: { userId: true, deletedAt: true, isPublic: true },
+            });
+            break;
+        default:
+            throw new Error('Invalid target type');
+    }
 
     if (!existingTarget) {
         throw new Error(getMessage(`${targetType.toUpperCase()}_NOT_FOUND`));
