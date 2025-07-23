@@ -1,30 +1,33 @@
-// src/services/photo.service.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Photo, User } from '@prisma/client';
 import sharp from 'sharp';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import s3Client, { bucketName } from '../lib/s3Client';
 import { getMessage } from '../utils/messageMapper';
 import config from '../config';
+import { isFollowing } from './follow.service'; // isFollowing 함수 임포트
 
 // Prisma 클라이언트 인스턴스를 생성합니다.
 const prisma = new PrismaClient();
 
+type AuthorWithFollowStatus = Pick<User, 'id' | 'username'> & { isFollowed: boolean };
+
 /**
  * 정렬 기준에 따라 사진 목록을 조회하는 서비스 함수
  * @param sortBy 정렬 기준 문자열 ('popular' 또는 그 외)
+ * @param currentUserId 현재 로그인된 사용자의 ID (선택 사항)
  * @returns 정렬된 사진 목록
  */
-export const getPhotos = async (sortBy: string) => {
+export const getPhotos = async (sortBy: string, currentUserId?: number) => {
     const whereCondition = {
         deletedAt: null, // 소프트 삭제된 사진은 제외
         isPublic: true, // 공개된 사진만 조회
     };
 
+    let photos;
+
     // 'popular' (인기순)으로 정렬하는 경우
     if (sortBy === 'popular') {
-        // Photo 모델을 직접 쿼리하면서, 관계된 PhotoLike의 개수(likes._count)를 기준으로 정렬합니다.
-        // 이 방식은 좋아요가 없는 사진도 결과에 포함시킵니다.
-        return prisma.photo.findMany({
+        photos = await prisma.photo.findMany({
             where: whereCondition,
             include: {
                 _count: {
@@ -38,7 +41,6 @@ export const getPhotos = async (sortBy: string) => {
                 }
             },
             orderBy: {
-                // likes 관계의 개수(count)를 기준으로 내림차순 정렬합니다.
                 likes: {
                     _count: 'desc',
                 },
@@ -46,7 +48,7 @@ export const getPhotos = async (sortBy: string) => {
         });
     } else {
         // 'latest' (최신순) 또는 그 외의 경우, 모든 사진을 최신순으로 정렬하여 반환합니다.
-        return prisma.photo.findMany({
+        photos = await prisma.photo.findMany({
             where: whereCondition,
             include: {
                 _count: {
@@ -60,10 +62,39 @@ export const getPhotos = async (sortBy: string) => {
                 }
             },
             orderBy: {
-                createdAt: 'desc', // 생성일(createdAt) 기준으로 내림차순 정렬
+                createdAt: 'desc',
             },
         });
     }
+
+    // 각 사진의 작성자에 대한 팔로우 상태 추가
+    // Collect all unique author IDs from the photos
+    const authorIds = Array.from(new Set(photos.map(photo => photo.author?.id).filter(id => id !== undefined)));
+
+    // Batch query to check follow status for all authors
+    const followStatuses = currentUserId
+        ? await prisma.follow.findMany({
+              where: {
+                  followerId: currentUserId,
+                  followingId: { in: authorIds },
+              },
+              select: { followingId: true },
+          })
+        : [];
+
+    const followedAuthorIds = new Set(followStatuses.map(status => status.followingId));
+
+    // Map follow status back to photos
+    const photosWithFollowStatus = photos.map(photo => {
+        let authorWithFollowStatus: AuthorWithFollowStatus | undefined;
+        if (photo.author) {
+            const isFollowed = currentUserId ? followedAuthorIds.has(photo.author.id) : false;
+            authorWithFollowStatus = { ...photo.author, isFollowed };
+        }
+        return { ...photo, author: authorWithFollowStatus };
+    });
+
+    return photosWithFollowStatus;
 };
 
 /**
@@ -71,8 +102,8 @@ export const getPhotos = async (sortBy: string) => {
  * @param photoId 조회할 사진의 ID
  * @returns 사진, 작성자, 댓글(작성자 포함), 좋아요 정보를 포함하는 객체
  */
-export const getPhotoById = async (photoId: number) => {
-    return prisma.photo.findFirst({
+export const getPhotoById = async (photoId: number, currentUserId?: number) => {
+    const photo = await prisma.photo.findFirst({
         where: { id: { equals: photoId }, deletedAt: null, isPublic: true },
         include: {
             author: {
@@ -100,6 +131,18 @@ export const getPhotoById = async (photoId: number) => {
             },
         },
     });
+
+    if (!photo) {
+        return null;
+    }
+
+    let authorWithFollowStatus: AuthorWithFollowStatus | undefined;
+    if (photo.author) {
+        const followed = currentUserId ? await isFollowing(currentUserId, photo.author.id) : false;
+        authorWithFollowStatus = { ...photo.author, isFollowed: followed };
+    }
+
+    return { ...photo, author: authorWithFollowStatus };
 };
 
 /**

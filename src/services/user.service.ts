@@ -1,9 +1,19 @@
 // src/services/user.service.ts
 import { PrismaClient } from '@prisma/client';
+import { isFollowing } from './follow.service';
 
 const prisma = new PrismaClient();
 
-export const getUserProfile = async (userId: number) => {
+type UserProfileWithFollowStatus = {
+    id: number;
+    username: string;
+    email: string;
+    bio: string | null;
+    profileImageUrl: string | null;
+    isFollowed: boolean;
+};
+
+export const getUserProfile = async (userId: number, currentUserId?: number): Promise<UserProfileWithFollowStatus> => {
     const user = await prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -19,6 +29,11 @@ export const getUserProfile = async (userId: number) => {
         throw new Error('User not found');
     }
 
+    let isFollowed = false;
+    if (currentUserId && currentUserId !== userId) {
+        isFollowed = await isFollowing(currentUserId, userId);
+    }
+
     // 응답 데이터 구조 변경
     return {
         id: user.id,
@@ -26,6 +41,7 @@ export const getUserProfile = async (userId: number) => {
         email: user.email,
         bio: user.bio,
         profileImageUrl: user.profileImageUrl,
+        isFollowed,
     };
 };
 

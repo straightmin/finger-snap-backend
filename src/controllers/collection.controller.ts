@@ -26,7 +26,8 @@ export const toggleCollection = asyncHandler(async (req: Request, res: Response)
  */
 export const getMyCollections = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
-    const photos = await collectionService.getDefaultCollectionPhotos(userId);
+    const currentUserId = req.user?.id;
+    const photos = await collectionService.getDefaultCollectionPhotos(userId, currentUserId);
 
     const photosWithLikeCount = photos.map(item => ({
         ...item.photo,
@@ -69,13 +70,14 @@ export const getUserCollections = asyncHandler(async (req: Request, res: Respons
  */
 export const getCollectionById = asyncHandler(async (req: Request, res: Response) => {
     const collectionId = parseInt(req.params.id, 10);
+    const currentUserId = req.user?.id;
 
     if (isNaN(collectionId)) {
         res.status(400).json({ message: 'Invalid collection ID' });
         return;
     }
 
-    const collection = await collectionService.getCollectionDetails(collectionId);
+    const collection = await collectionService.getCollectionDetails(collectionId, currentUserId);
 
     if (!collection) {
         res.status(404).json({ message: 'Collection not found' });

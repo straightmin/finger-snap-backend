@@ -5,8 +5,9 @@ import { asyncHandler } from '../utils/asyncHandler';
 
 export const getPhotos = asyncHandler(async (req: Request, res: Response) => {
     const sortBy = req.query.sortBy as string;
+    const currentUserId = req.user?.id;
 
-    const photos = await photoService.getPhotos(sortBy);
+    const photos = await photoService.getPhotos(sortBy, currentUserId);
     const photosWithLikeCount = photos.map(photo => ({
         ...photo,
         likesCount: photo._count.likes,
@@ -23,12 +24,13 @@ export const getPhotos = asyncHandler(async (req: Request, res: Response) => {
  */
 export const getPhotoById = asyncHandler(async (req: Request, res: Response) => {
     const photoId = parseInt(req.params.id, 10);
+    const currentUserId = req.user?.id;
 
     if (isNaN(photoId)) {
         return res.status(400).json({ message: 'Invalid photo ID' });
     }
 
-    const photo = await photoService.getPhotoById(photoId);
+    const photo = await photoService.getPhotoById(photoId, currentUserId);
 
     if (!photo) {
         res.status(404).json({ message: 'PHOTO_NOT_FOUND' });

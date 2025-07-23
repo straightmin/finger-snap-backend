@@ -6,73 +6,52 @@ import * as notificationService from './notification.service';
 const prisma = getPrismaClient();
 
 /**
- * 팔로우 기능을 구현하는 서비스 함수
+ * 팔로우/언팔로우 토글 기능을 구현하는 서비스 함수
  * @param followerId 팔로워의 사용자 ID
- * @param followingId 팔로우할 사용자의 ID
- * @returns 팔로우 정보
+ * @param followingId 토글할 사용자의 ID
+ * @returns 현재 팔로우 상태 (true: 팔로우, false: 언팔로우)와 메시지를 담은 객체
  */
-export const followUser = async (followerId: number, followingId: number) => {
+export const toggleFollow = async (followerId: number, followingId: number) => {
     if (followerId === followingId) {
         throw new Error('CANNOT_FOLLOW_YOURSELF');
     }
 
     const existingFollow = await prisma.follow.findUnique({
-        where: { followerId_followingId: { followerId, followingId } },
+        where: {
+            followerId_followingId: {
+                followerId,
+                followingId,
+            },
+        },
     });
 
     if (existingFollow) {
-        throw new Error('ALREADY_FOLLOWING_THIS_USER');
-    }
-
-    const newFollow = await prisma.follow.create({
-        data: { followerId, followingId },
-    });
-
-    await notificationService.createNotification({
-        userId: followingId,
-        actorId: followerId,
-        eventType: 'FOLLOW',
-        followId: newFollow.id,
-    });
-
-    return newFollow;
-};
-
-/**
- * 언팔로우 기능을 구현하는 서비스 함수
- * @param followerId 팔로워의 사용자 ID
- * @param followingId 팔로우를 취소할 사용자의 ID
- * @returns 언팔로우 정보
- */
-export const unfollowUser = async (followerId: number, followingId: number) => {
-    // 팔로우할 사용자와 팔로워가 동일한 경우 예외 처리
-    if (followerId === followingId) {
-        throw new Error('CANNOT_UNFOLLOW_YOURSELF');
-    }
-
-    const existingFollow = await prisma.follow.findUnique({
-        where: {
-            followerId_followingId: {
+        // 언팔로우
+        await prisma.follow.delete({
+            where: {
+                id: existingFollow.id,
+            },
+        });
+        return { isFollowing: false, message: 'Successfully unfollowed.' };
+    } else {
+        // 팔로우
+        const newFollow = await prisma.follow.create({
+            data: {
                 followerId,
                 followingId,
             },
-        },
-    });
+        });
 
-    // 팔로우 중이지 않은 경우 예외 처리
-    if (!existingFollow) {
-        throw new Error('Not following this user.');
+        // 알림 생성
+        await notificationService.createNotification({
+            userId: followingId,
+            actorId: followerId,
+            eventType: 'FOLLOW',
+            followId: newFollow.id,
+        });
+
+        return { isFollowing: true, message: 'Successfully followed.' };
     }
-
-    // 팔로우 삭제
-    return prisma.follow.delete({
-        where: {
-            followerId_followingId: {
-                followerId,
-                followingId,
-            },
-        },
-    });
 };
 
 /**
