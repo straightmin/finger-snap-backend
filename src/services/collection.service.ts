@@ -212,16 +212,47 @@ export const getCollectionDetails = async (collectionId: number, currentUserId?:
     }
 
     let ownerWithFollowStatus: OwnerWithFollowStatus | undefined;
+    const authorIds = new Set<number>();
+
     if (collection.owner) {
-        const followed = currentUserId ? await isFollowing(currentUserId, collection.owner.id) : false;
-        ownerWithFollowStatus = { ...collection.owner, isFollowed: followed };
+        authorIds.add(collection.owner.id);
     }
 
-    const photosWithFollowStatus = await Promise.all(collection.photos.map(async (cp) => {
+    collection.photos.forEach((cp) => {
+        if (cp.photo.author) {
+            authorIds.add(cp.photo.author.id);
+        }
+    });
+
+    const followStatuses = currentUserId
+        ? await prisma.follow.findMany({
+              where: {
+                  followerId: currentUserId,
+                  followingId: { in: Array.from(authorIds) },
+              },
+              select: { followingId: true },
+          })
+        : [];
+
+    const followStatusMap = new Map<number, boolean>();
+    followStatuses.forEach((status) => {
+        followStatusMap.set(status.followingId, true);
+    });
+
+    if (collection.owner) {
+        ownerWithFollowStatus = {
+            ...collection.owner,
+            isFollowed: followStatusMap.get(collection.owner.id) || false,
+        };
+    }
+
+    const photosWithFollowStatus = collection.photos.map((cp) => {
         let photoAuthorWithFollowStatus: AuthorWithFollowStatus | undefined;
         if (cp.photo.author) {
-            const followed = currentUserId ? await isFollowing(currentUserId, cp.photo.author.id) : false;
-            photoAuthorWithFollowStatus = { ...cp.photo.author, isFollowed: followed };
+            photoAuthorWithFollowStatus = {
+                ...cp.photo.author,
+                isFollowed: followStatusMap.get(cp.photo.author.id) || false,
+            };
         }
         return {
             ...cp,
