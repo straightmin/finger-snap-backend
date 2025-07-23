@@ -1,7 +1,10 @@
-// src/services/collection.service.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
+import { isFollowing } from './follow.service';
 
 const prisma = new PrismaClient();
+
+type AuthorWithFollowStatus = Pick<User, 'id' | 'username'> & { isFollowed: boolean };
+type OwnerWithFollowStatus = Pick<User, 'id' | 'username'> & { isFollowed: boolean };
 
 /**
  * 사용자의 기본 컬렉션을 찾거나 생성합니다.
@@ -67,12 +70,13 @@ export const togglePhotoInDefaultCollection = async (userId: number, photoId: nu
 /**
  * 사용자의 기본 컬렉션에 있는 사진 목록을 조회합니다.
  * @param userId 사용자 ID
+ * @param currentUserId 현재 로그인된 사용자의 ID (선택 사항)
  * @returns 컬렉션에 담긴 사진 목록
  */
-export const getDefaultCollectionPhotos = async (userId: number) => {
+export const getDefaultCollectionPhotos = async (userId: number, currentUserId?: number) => {
     const collection = await findOrCreateDefaultCollection(userId);
 
-    return prisma.collectionPhoto.findMany({
+    const collectionPhotos = await prisma.collectionPhoto.findMany({
         where: {
             collectionId: collection.id,
             photo: {
@@ -98,6 +102,23 @@ export const getDefaultCollectionPhotos = async (userId: number) => {
             createdAt: 'desc',
         },
     });
+
+    const photosWithFollowStatus = await Promise.all(collectionPhotos.map(async (cp) => {
+        let authorWithFollowStatus: AuthorWithFollowStatus | undefined;
+        if (cp.photo.author) {
+            const followed = currentUserId ? await isFollowing(currentUserId, cp.photo.author.id) : false;
+            authorWithFollowStatus = { ...cp.photo.author, isFollowed: followed };
+        }
+        return {
+            ...cp,
+            photo: {
+                ...cp.photo,
+                author: authorWithFollowStatus,
+            },
+        };
+    }));
+
+    return photosWithFollowStatus;
 };
 
 /**
@@ -138,15 +159,33 @@ export const getUserCollections = async (userId: number) => {
  * @param collectionId 컬렉션 ID
  * @returns 컬렉션 상세 정보 (사진 목록 포함)
  */
-export const getCollectionDetails = async (collectionId: number) => {
-    return prisma.collection.findUnique({
+export const getCollectionDetails = async (collectionId: number, currentUserId?: number) => {
+    const collection = await prisma.collection.findUnique({
         where: {
             id: collectionId,
         },
         include: {
+            owner: {
+                select: {
+                    id: true,
+                    username: true,
+                },
+            },
             photos: {
                 include: {
-                    photo: true,
+                    photo: {
+                        include: {
+                            author: {
+                                select: {
+                                    id: true,
+                                    username: true,
+                                },
+                            },
+                            _count: {
+                                select: { likes: true },
+                            },
+                        },
+                    },
                 },
                 orderBy: {
                     createdAt: 'desc',
@@ -154,6 +193,33 @@ export const getCollectionDetails = async (collectionId: number) => {
             },
         },
     });
+
+    if (!collection) {
+        return null;
+    }
+
+    let ownerWithFollowStatus: OwnerWithFollowStatus | undefined;
+    if (collection.owner) {
+        const followed = currentUserId ? await isFollowing(currentUserId, collection.owner.id) : false;
+        ownerWithFollowStatus = { ...collection.owner, isFollowed: followed };
+    }
+
+    const photosWithFollowStatus = await Promise.all(collection.photos.map(async (cp) => {
+        let photoAuthorWithFollowStatus: AuthorWithFollowStatus | undefined;
+        if (cp.photo.author) {
+            const followed = currentUserId ? await isFollowing(currentUserId, cp.photo.author.id) : false;
+            photoAuthorWithFollowStatus = { ...cp.photo.author, isFollowed: followed };
+        }
+        return {
+            ...cp,
+            photo: {
+                ...cp.photo,
+                author: photoAuthorWithFollowStatus,
+            },
+        };
+    }));
+
+    return { ...collection, owner: ownerWithFollowStatus, photos: photosWithFollowStatus };
 };
 
 /**

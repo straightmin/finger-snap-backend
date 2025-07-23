@@ -7,7 +7,7 @@ import * as photoService from '../services/photo.service';
 export const getMyProfile = asyncHandler(async (req: Request, res: Response) => {
 
     const userId = req.user!.id;
-    const profile = await userService.getUserProfile(userId);
+    const profile = await userService.getUserProfile(userId, userId);
     res.status(200).json(profile);
 });
 

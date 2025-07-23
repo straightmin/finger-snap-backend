@@ -1,7 +1,9 @@
-// src/services/series.service.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
+import { isFollowing } from './follow.service';
 
 const prisma = new PrismaClient();
+
+type AuthorWithFollowStatus = Pick<User, 'id' | 'username'> & { profileImageUrl?: string | null; isFollowed: boolean };
 
 /**
  * 새로운 시리즈를 생성합니다.
@@ -33,10 +35,11 @@ export const createSeries = async (
 /**
  * 특정 시리즈의 상세 정보를 조회합니다.
  * @param seriesId 시리즈 ID
+ * @param currentUserId 현재 로그인된 사용자의 ID (선택 사항)
  * @returns 시리즈 객체 (사진 목록 포함) 또는 null
  */
-export const getSeriesById = async (seriesId: number) => {
-    return prisma.series.findUnique({
+export const getSeriesById = async (seriesId: number, currentUserId?: number) => {
+    const series = await prisma.series.findUnique({
         where: { id: seriesId },
         include: {
             author: {
@@ -69,6 +72,33 @@ export const getSeriesById = async (seriesId: number) => {
             },
         },
     });
+
+    if (!series) {
+        return null;
+    }
+
+    let authorWithFollowStatus: AuthorWithFollowStatus | undefined;
+    if (series.author) {
+        const followed = currentUserId ? await isFollowing(currentUserId, series.author.id) : false;
+        authorWithFollowStatus = { ...series.author, isFollowed: followed };
+    }
+
+    const photosWithFollowStatus = await Promise.all(series.photos.map(async (seriesPhoto) => {
+        let photoAuthorWithFollowStatus: AuthorWithFollowStatus | undefined;
+        if (seriesPhoto.photo.author) {
+            const followed = currentUserId ? await isFollowing(currentUserId, seriesPhoto.photo.author.id) : false;
+            photoAuthorWithFollowStatus = { ...seriesPhoto.photo.author, isFollowed: followed };
+        }
+        return {
+            ...seriesPhoto,
+            photo: {
+                ...seriesPhoto.photo,
+                author: photoAuthorWithFollowStatus,
+            },
+        };
+    }));
+
+    return { ...series, author: authorWithFollowStatus, photos: photosWithFollowStatus };
 };
 
 /**
@@ -76,8 +106,8 @@ export const getSeriesById = async (seriesId: number) => {
  * @param userId 사용자 ID
  * @returns 시리즈 목록
  */
-export const getUserSeries = async (userId: number) => {
-    return prisma.series.findMany({
+export const getUserSeries = async (userId: number, currentUserId?: number) => {
+    const seriesList = await prisma.series.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
         include: {
@@ -85,8 +115,25 @@ export const getUserSeries = async (userId: number) => {
             _count: {
                 select: { photos: true }, // 시리즈에 포함된 사진 수
             },
+            author: {
+                select: {
+                    id: true,
+                    username: true,
+                },
+            },
         },
     });
+
+    const seriesWithFollowStatus = await Promise.all(seriesList.map(async (series) => {
+        let authorWithFollowStatus: AuthorWithFollowStatus | undefined;
+        if (series.author) {
+            const followed = currentUserId ? await isFollowing(currentUserId, series.author.id) : false;
+            authorWithFollowStatus = { ...series.author, isFollowed: followed };
+        }
+        return { ...series, author: authorWithFollowStatus };
+    }));
+
+    return seriesWithFollowStatus;
 };
 
 /**

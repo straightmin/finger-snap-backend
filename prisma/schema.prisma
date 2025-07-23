@@ -23,8 +23,8 @@ model User {
   likes                 Like[]
   photos                Photo[]
   series                Series[]
-  followers             Follow[]         @relation("FollowsTo")
-  following             Follow[]         @relation("FollowsFrom")
+  followers             Follow[]         @relation("Following")
+  following             Follow[]         @relation("Follower")
   receivedNotifications Notification[]   @relation("UserReceivedNotifications")
   sentNotifications     Notification[]   @relation("UserSentNotifications")
 
@@ -33,16 +33,16 @@ model User {
 
 // 팔로우 관계
 model Follow {
-  id          Int          @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   followerId  Int
   followingId Int
-  createdAt   DateTime     @default(now())
-  follower    User         @relation("FollowsFrom", fields: [followerId], references: [id])
-  following   User         @relation("FollowsTo", fields: [followingId], references: [id])
-  notifications Notification[]
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  notifications Notification[] @relation("NotificationToFollow")
 
   @@unique([followerId, followingId])
-  @@map("follows")
 }
 
 /// 사진(게시물)
@@ -171,7 +171,7 @@ model Notification {
   series    Series?  @relation(fields: [seriesId], references: [id])
   comment   Comment? @relation(fields: [commentId], references: [id])
   like      Like?    @relation(fields: [likeId], references: [id])
-  follow    Follow?  @relation(fields: [followId], references: [id])
+  follow    Follow?  @relation("NotificationToFollow", fields: [followId], references: [id])
 
   @@index([userId])
   @@map("notifications")

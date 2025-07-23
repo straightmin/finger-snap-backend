@@ -3,28 +3,11 @@ import { asyncHandler } from '../utils/asyncHandler';
 import * as followService from '../services/follow.service';
 
 /**
- * 팔로우하는 컨트롤러 함수
- * @param req Express의 Request 객체. `req.params.id`로 팔로우할 사용자의 ID를 받습니다.
- * @param res Express의 Response 객체. 생성된 팔로우 정보 또는 에러 메시지를 반환합니다.
-*/
-export const followUser = asyncHandler(async (req: Request, res: Response) => {
-    const followerId = req.user?.id;
-    const followingId = Number(req.params.id);
-
-    if (!followerId) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    const follow = await followService.followUser(followerId, followingId);
-    res.status(201).json(follow);
-});
-
-/**
- * 언팔로우하는 컨트롤러 함수
- * @param req Express의 Request 객체. `req.params.id`로 언팔로우할 사용자의 ID를 받습니다.
- * @param res Express의 Response 객체. 성공 메시지 또는 에러 메시지를 반환합니다.
+ * 팔로우/언팔로우 토글 컨트롤러 함수
+ * @param req Express의 Request 객체. `req.params.id`로 토글할 사용자의 ID를 받습니다.
+ * @param res Express의 Response 객체. 작업 결과를 반환합니다.
  */
-export const unfollowUser = asyncHandler(async (req: Request, res: Response) => {
+export const toggleFollow = asyncHandler(async (req: Request, res: Response) => {
     const followerId = req.user?.id;
     const followingId = Number(req.params.id);
 
@@ -32,8 +15,8 @@ export const unfollowUser = asyncHandler(async (req: Request, res: Response) => 
         return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    await followService.unfollowUser(followerId, followingId);
-    res.status(204).send();
+    const result = await followService.toggleFollow(followerId, followingId);
+    res.status(200).json(result);
 });
 
 /**

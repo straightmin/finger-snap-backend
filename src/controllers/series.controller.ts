@@ -26,13 +26,14 @@ export const createSeries = asyncHandler(async (req: Request, res: Response) => 
  */
 export const getSeriesById = asyncHandler(async (req: Request, res: Response) => {
     const seriesId = parseInt(req.params.id, 10);
+    const currentUserId = req.user?.id;
 
     if (isNaN(seriesId)) {
         res.status(400).json({ message: 'Invalid series ID' });
         return;
     }
 
-    const series = await seriesService.getSeriesById(seriesId);
+    const series = await seriesService.getSeriesById(seriesId, currentUserId);
 
     if (!series) {
         res.status(404).json({ message: 'Series not found' });
@@ -48,7 +49,7 @@ export const getSeriesById = asyncHandler(async (req: Request, res: Response) =>
  */
 export const getMySeries = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
-    const series = await seriesService.getUserSeries(userId);
+    const series = await seriesService.getUserSeries(userId, userId);
     res.status(200).json(series);
 });
 
