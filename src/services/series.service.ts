@@ -95,12 +95,12 @@ export const getSeriesById = async (seriesId: number, currentUserId?: number) =>
 
     const followStatuses = currentUserId
         ? await prisma.follow.findMany({
-              where: {
-                  followerId: currentUserId,
-                  followingId: { in: Array.from(authorIds) },
-              },
-              select: { followingId: true },
-          })
+            where: {
+                followerId: currentUserId,
+                followingId: { in: Array.from(authorIds) },
+            },
+            select: { followingId: true },
+        })
         : [];
 
     const followStatusMap = new Map<number, boolean>();
@@ -121,7 +121,7 @@ export const getSeriesById = async (seriesId: number, currentUserId?: number) =>
                 author: photoAuthorWithFollowStatus,
             },
         };
-    }));
+    });
 
     return { ...series, author: authorWithFollowStatus, photos: photosWithFollowStatus };
 };
@@ -155,12 +155,12 @@ export const getUserSeries = async (userId: number, currentUserId?: number) => {
 
     const followStatuses = currentUserId
         ? await prisma.follow.findMany({
-              where: {
-                  followerId: currentUserId,
-                  followingId: { in: authorIds },
-              },
-              select: { followingId: true },
-          })
+            where: {
+                followerId: currentUserId,
+                followingId: { in: authorIds },
+            },
+            select: { followingId: true },
+        })
         : [];
 
     const followStatusMap = new Map(

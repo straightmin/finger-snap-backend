@@ -11,10 +11,9 @@ import { getErrorMessage } from "../utils/messageMapper";
 export const toggleCollection = asyncHandler(async (req: Request, res: Response) => {
     const photoId = parseInt(req.params.id, 10);
     const userId = req.user!.id;
-    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (isNaN(photoId)) {
-        res.status(400).json({ message: getErrorMessage("PHOTO.INVALID_ID", lang) });
+        res.status(400).json({ message: getErrorMessage("PHOTO.INVALID_ID", req.lang) });
         return;
     }
 
@@ -46,10 +45,9 @@ export const getMyCollections = asyncHandler(async (req: Request, res: Response)
 export const createCollection = asyncHandler(async (req: Request, res: Response) => {
     const { title, description } = req.body;
     const userId = req.user!.id;
-    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (!title) {
-        res.status(400).json({ message: getErrorMessage("COLLECTION.TITLE_REQUIRED", lang) });
+        res.status(400).json({ message: getErrorMessage("COLLECTION.TITLE_REQUIRED", req.lang) });
         return;
     }
 
@@ -74,17 +72,16 @@ export const getUserCollections = asyncHandler(async (req: Request, res: Respons
 export const getCollectionById = asyncHandler(async (req: Request, res: Response) => {
     const collectionId = parseInt(req.params.id, 10);
     const currentUserId = req.user?.id;
-    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (isNaN(collectionId)) {
-        res.status(400).json({ message: getErrorMessage("COLLECTION.INVALID_ID", lang) });
+        res.status(400).json({ message: getErrorMessage("COLLECTION.INVALID_ID", req.lang) });
         return;
     }
 
     const collection = await collectionService.getCollectionDetails(collectionId, currentUserId);
 
     if (!collection) {
-        res.status(404).json({ message: getErrorMessage("COLLECTION.NOT_FOUND", lang) });
+        res.status(404).json({ message: getErrorMessage("COLLECTION.NOT_FOUND", req.lang) });
         return;
     }
 
@@ -99,27 +96,26 @@ export const updateCollection = asyncHandler(async (req: Request, res: Response)
     const collectionId = parseInt(req.params.id, 10);
     const { title, description } = req.body;
     const userId = req.user!.id;
-    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (isNaN(collectionId)) {
-        res.status(400).json({ message: getErrorMessage("COLLECTION.INVALID_ID", lang) });
+        res.status(400).json({ message: getErrorMessage("COLLECTION.INVALID_ID", req.lang) });
         return;
     }
 
     if (!title) {
-        res.status(400).json({ message: getErrorMessage("COLLECTION.TITLE_REQUIRED", lang) });
+        res.status(400).json({ message: getErrorMessage("COLLECTION.TITLE_REQUIRED", req.lang) });
         return;
     }
 
     const collection = await collectionService.getCollectionDetails(collectionId);
 
     if (!collection) {
-        res.status(404).json({ message: getErrorMessage("COLLECTION.NOT_FOUND", lang) });
+        res.status(404).json({ message: getErrorMessage("COLLECTION.NOT_FOUND", req.lang) });
         return;
     }
 
     if (collection.userId !== userId) {
-        res.status(403).json({ message: getErrorMessage("COLLECTION.UNAUTHORIZED_UPDATE", lang) });
+        res.status(403).json({ message: getErrorMessage("COLLECTION.UNAUTHORIZED_UPDATE", req.lang) });
         return;
     }
 
@@ -134,22 +130,21 @@ export const updateCollection = asyncHandler(async (req: Request, res: Response)
 export const deleteCollection = asyncHandler(async (req: Request, res: Response) => {
     const collectionId = parseInt(req.params.id, 10);
     const userId = req.user!.id;
-    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (isNaN(collectionId)) {
-        res.status(400).json({ message: getErrorMessage("COLLECTION.INVALID_ID", lang) });
+        res.status(400).json({ message: getErrorMessage("COLLECTION.INVALID_ID", req.lang) });
         return;
     }
 
     const collection = await collectionService.getCollectionDetails(collectionId);
 
     if (!collection) {
-        res.status(404).json({ message: getErrorMessage("COLLECTION.NOT_FOUND", lang) });
+        res.status(404).json({ message: getErrorMessage("COLLECTION.NOT_FOUND", req.lang) });
         return;
     }
 
     if (collection.userId !== userId) {
-        res.status(403).json({ message: getErrorMessage("COLLECTION.UNAUTHORIZED_DELETE", lang) });
+        res.status(403).json({ message: getErrorMessage("COLLECTION.UNAUTHORIZED_DELETE", req.lang) });
         return;
     }
 
@@ -164,32 +159,31 @@ export const deleteCollection = asyncHandler(async (req: Request, res: Response)
 export const addPhotoToCollection = asyncHandler(async (req: Request, res: Response) => {
     const { collectionId, photoId } = req.params;
     const userId = req.user!.id;
-    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     const collectionIdNum = parseInt(collectionId, 10);
     const photoIdNum = parseInt(photoId, 10);
 
     if (isNaN(collectionIdNum) || isNaN(photoIdNum)) {
-        res.status(400).json({ message: getErrorMessage("GLOBAL.INVALID_ID", lang) });
+        res.status(400).json({ message: getErrorMessage("GLOBAL.INVALID_ID", req.lang) });
         return;
     }
 
     const collection = await collectionService.getCollectionDetails(collectionIdNum);
 
     if (!collection) {
-        res.status(404).json({ message: getErrorMessage("COLLECTION.NOT_FOUND", lang) });
+        res.status(404).json({ message: getErrorMessage("COLLECTION.NOT_FOUND", req.lang) });
         return;
     }
 
     if (collection.userId !== userId) {
-        res.status(403).json({ message: getErrorMessage("COLLECTION.UNAUTHORIZED_ADD_PHOTO", lang) });
+        res.status(403).json({ message: getErrorMessage("COLLECTION.UNAUTHORIZED_ADD_PHOTO", req.lang) });
         return;
     }
 
     const result = await collectionService.addPhotoToCollection(collectionIdNum, photoIdNum);
 
     if (!result) {
-        res.status(409).json({ message: getErrorMessage("COLLECTION.PHOTO_ALREADY_EXISTS", lang) });
+        res.status(409).json({ message: getErrorMessage("COLLECTION.PHOTO_ALREADY_EXISTS", req.lang) });
         return;
     }
 
@@ -203,13 +197,12 @@ export const addPhotoToCollection = asyncHandler(async (req: Request, res: Respo
 export const removePhotoFromCollection = asyncHandler(async (req: Request, res: Response) => {
     const { collectionId, photoId } = req.params;
     const userId = req.user!.id;
-    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     const collectionIdNum = parseInt(collectionId, 10);
     const photoIdNum = parseInt(photoId, 10);
 
     if (isNaN(collectionIdNum) || isNaN(photoIdNum)) {
-        res.status(400).json({ message: getErrorMessage("GLOBAL.INVALID_ID", lang) });
+        res.status(400).json({ message: getErrorMessage("GLOBAL.INVALID_ID", req.lang) });
         return;
     }
 
@@ -221,7 +214,7 @@ export const removePhotoFromCollection = asyncHandler(async (req: Request, res: 
     }
 
     if (collection.userId !== userId) {
-        res.status(403).json({ message: getErrorMessage("COLLECTION.UNAUTHORIZED_REMOVE_PHOTO", lang) });
+        res.status(403).json({ message: getErrorMessage("COLLECTION.UNAUTHORIZED_REMOVE_PHOTO", req.lang) });
         return;
     }
 
@@ -230,6 +223,6 @@ export const removePhotoFromCollection = asyncHandler(async (req: Request, res: 
         res.status(204).send();
     } catch (error) {
         // Prisma의 P2025 코드는 레코드를 찾지 못했을 때 발생합니다.
-        res.status(404).json({ message: getErrorMessage("COLLECTION.PHOTO_NOT_FOUND", lang) });
+        res.status(404).json({ message: getErrorMessage("COLLECTION.PHOTO_NOT_FOUND", req.lang) });
     }
 });

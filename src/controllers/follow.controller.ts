@@ -11,10 +11,9 @@ import { getErrorMessage } from "../utils/messageMapper";
 export const toggleFollow = asyncHandler(async (req: Request, res: Response) => {
     const followerId = req.user?.id;
     const followingId = Number(req.params.id);
-    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (!followerId) {
-        return res.status(401).json({ message: getErrorMessage("GLOBAL.UNAUTHORIZED", lang) });
+        return res.status(401).json({ message: getErrorMessage("GLOBAL.UNAUTHORIZED", req.lang) });
     }
 
     const result = await followService.toggleFollow(followerId, followingId);
@@ -51,10 +50,9 @@ export const getFollowing = asyncHandler(async (req: Request, res: Response) => 
 export const isFollowing = asyncHandler(async (req: Request, res: Response) => {
     const followerId = req.user?.id;
     const followingId = Number(req.params.id);
-    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (!followerId) {
-        return res.status(401).json({ message: getErrorMessage("GLOBAL.UNAUTHORIZED", lang) });
+        return res.status(401).json({ message: getErrorMessage("GLOBAL.UNAUTHORIZED", req.lang) });
     }
 
     const isFollowingStatus = await followService.isFollowing(followerId, followingId);

@@ -47,7 +47,6 @@ export const getMyLikedPhotos = asyncHandler(async (req: Request, res: Response)
 
 export const deleteMyAccount = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
-    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
     await userService.deleteUser(userId);
-    res.status(200).json({ message: getSuccessMessage("USER.ACCOUNT_DELETED", lang) });
+    res.status(200).json({ message: getSuccessMessage("USER.ACCOUNT_DELETED", req.lang) });
 });

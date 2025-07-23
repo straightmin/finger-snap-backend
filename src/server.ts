@@ -11,12 +11,16 @@ import seriesRoutes from "./routes/series.routes";
 import notificationRoutes from "./routes/notification.routes";
 import { errorHandler } from "./middlewares/errorHandler";
 import userRoutes from "./routes/user.routes";
+import { setLanguage } from "./middlewares/language.middleware";
 
 // Express 애플리케이션을 생성합니다.
 const app = express();
 
 // JSON 요청 본문을 파싱하기 위한 미들웨어를 추가합니다.
 app.use(express.json());
+
+// 언어 설정 미들웨어 적용
+app.use(setLanguage);
 
 // 사용자 관련 라우트를 /api/users 경로에 등록합니다.
 app.use("/api/users", userRoutes);

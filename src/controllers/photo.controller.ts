@@ -26,16 +26,15 @@ export const getPhotos = asyncHandler(async (req: Request, res: Response) => {
 export const getPhotoById = asyncHandler(async (req: Request, res: Response) => {
     const photoId = parseInt(req.params.id, 10);
     const currentUserId = req.user?.id;
-    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (isNaN(photoId)) {
-        return res.status(400).json({ message: getErrorMessage("PHOTO.INVALID_ID", lang) });
+        return res.status(400).json({ message: getErrorMessage("PHOTO.INVALID_ID", req.lang) });
     }
 
     const photo = await photoService.getPhotoById(photoId, currentUserId);
 
     if (!photo) {
-        res.status(404).json({ message: getErrorMessage("PHOTO.NOT_FOUND", lang) });
+        res.status(404).json({ message: getErrorMessage("PHOTO.NOT_FOUND", req.lang) });
         return;
     }
 
@@ -54,9 +53,8 @@ export const getPhotoById = asyncHandler(async (req: Request, res: Response) => 
  * @param res Express의 Response 객체. 생성된 사진 정보 또는 에러 메시지를 반환합니다.
  */
 export const uploadPhoto = asyncHandler(async (req: Request, res: Response) => {
-    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
     if (!req.file) {
-        res.status(400).json({ message: getErrorMessage("PHOTO.REQUIRED", lang) });
+        res.status(400).json({ message: getErrorMessage("PHOTO.REQUIRED", req.lang) });
         return;
     }
 
@@ -84,10 +82,9 @@ export const updatePhotoVisibility = asyncHandler(async (req: Request, res: Resp
     const photoId = parseInt(req.params.id, 10);
     const { isPublic } = req.body;
     const userId = req.user!.id;
-    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (typeof isPublic !== 'boolean') {
-        res.status(400).json({ message: getErrorMessage("PHOTO.IS_PUBLIC_REQUIRED", lang) });
+        res.status(400).json({ message: getErrorMessage("PHOTO.IS_PUBLIC_REQUIRED", req.lang) });
         return;
     }
 
@@ -105,11 +102,10 @@ export const updatePhotoVisibility = asyncHandler(async (req: Request, res: Resp
 export const deletePhoto = asyncHandler(async (req: Request, res: Response) => {
     const photoId = parseInt(req.params.id, 10);
     const userId = req.user!.id;
-    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     await photoService.deletePhoto(photoId, userId);
 
-    res.status(200).json({ message: getSuccessMessage("PHOTO.DELETED", lang) });
+    res.status(200).json({ message: getSuccessMessage("PHOTO.DELETED", req.lang) });
 });
 
 /**

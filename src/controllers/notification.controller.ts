@@ -15,12 +15,11 @@ export const getNotifications = asyncHandler(async (req: Request, res: Response)
 export const markAsRead = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
     const { notificationIds } = req.body;
-    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (!notificationIds || !Array.isArray(notificationIds) || notificationIds.length === 0) {
-        return res.status(400).json({ message: getErrorMessage("NOTIFICATION.IDS_REQUIRED", lang) });
+        return res.status(400).json({ message: getErrorMessage("NOTIFICATION.IDS_REQUIRED", req.lang) });
     }
 
     await notificationService.markAsRead(userId, notificationIds);
-    res.status(200).json({ message: getSuccessMessage("NOTIFICATION.MARKED_READ", lang) });
+    res.status(200).json({ message: getSuccessMessage("NOTIFICATION.MARKED_READ", req.lang) });
 });
