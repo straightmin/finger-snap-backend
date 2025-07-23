@@ -103,11 +103,24 @@ export const getDefaultCollectionPhotos = async (userId: number, currentUserId?:
         },
     });
 
-    const photosWithFollowStatus = await Promise.all(collectionPhotos.map(async (cp) => {
+    const authorIds = Array.from(new Set(collectionPhotos.map(cp => cp.photo.author?.id).filter(id => id !== undefined)));
+    const followStatuses = currentUserId
+        ? await prisma.follow.findMany({
+              where: {
+                  followerId: currentUserId,
+                  followingId: { in: authorIds },
+              },
+              select: { followingId: true },
+          })
+        : [];
+
+    const followedAuthorIds = new Set(followStatuses.map(f => f.followingId));
+
+    const photosWithFollowStatus = collectionPhotos.map(cp => {
         let authorWithFollowStatus: AuthorWithFollowStatus | undefined;
         if (cp.photo.author) {
-            const followed = currentUserId ? await isFollowing(currentUserId, cp.photo.author.id) : false;
-            authorWithFollowStatus = { ...cp.photo.author, isFollowed: followed };
+            const isFollowed = currentUserId ? followedAuthorIds.has(cp.photo.author.id) : false;
+            authorWithFollowStatus = { ...cp.photo.author, isFollowed };
         }
         return {
             ...cp,
