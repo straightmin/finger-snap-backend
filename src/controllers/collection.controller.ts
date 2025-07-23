@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import * as collectionService from '../services/collection.service';
+import { getErrorMessage } from "../utils/messageMapper";
 
 /**
  * 사진을 기본 컬렉션에 추가하거나 제거하는 컨트롤러 함수
@@ -10,9 +11,10 @@ import * as collectionService from '../services/collection.service';
 export const toggleCollection = asyncHandler(async (req: Request, res: Response) => {
     const photoId = parseInt(req.params.id, 10);
     const userId = req.user!.id;
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (isNaN(photoId)) {
-        res.status(400).json({ message: 'Invalid photo ID' });
+        res.status(400).json({ message: getErrorMessage("PHOTO.INVALID_ID", lang) });
         return;
     }
 
@@ -44,9 +46,10 @@ export const getMyCollections = asyncHandler(async (req: Request, res: Response)
 export const createCollection = asyncHandler(async (req: Request, res: Response) => {
     const { title, description } = req.body;
     const userId = req.user!.id;
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (!title) {
-        res.status(400).json({ message: 'Collection title is required' });
+        res.status(400).json({ message: getErrorMessage("COLLECTION.TITLE_REQUIRED", lang) });
         return;
     }
 
@@ -71,16 +74,17 @@ export const getUserCollections = asyncHandler(async (req: Request, res: Respons
 export const getCollectionById = asyncHandler(async (req: Request, res: Response) => {
     const collectionId = parseInt(req.params.id, 10);
     const currentUserId = req.user?.id;
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (isNaN(collectionId)) {
-        res.status(400).json({ message: 'Invalid collection ID' });
+        res.status(400).json({ message: getErrorMessage("COLLECTION.INVALID_ID", lang) });
         return;
     }
 
     const collection = await collectionService.getCollectionDetails(collectionId, currentUserId);
 
     if (!collection) {
-        res.status(404).json({ message: 'Collection not found' });
+        res.status(404).json({ message: getErrorMessage("COLLECTION.NOT_FOUND", lang) });
         return;
     }
 
@@ -95,26 +99,27 @@ export const updateCollection = asyncHandler(async (req: Request, res: Response)
     const collectionId = parseInt(req.params.id, 10);
     const { title, description } = req.body;
     const userId = req.user!.id;
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (isNaN(collectionId)) {
-        res.status(400).json({ message: 'Invalid collection ID' });
+        res.status(400).json({ message: getErrorMessage("COLLECTION.INVALID_ID", lang) });
         return;
     }
 
     if (!title) {
-        res.status(400).json({ message: 'Collection title is required' });
+        res.status(400).json({ message: getErrorMessage("COLLECTION.TITLE_REQUIRED", lang) });
         return;
     }
 
     const collection = await collectionService.getCollectionDetails(collectionId);
 
     if (!collection) {
-        res.status(404).json({ message: 'Collection not found' });
+        res.status(404).json({ message: getErrorMessage("COLLECTION.NOT_FOUND", lang) });
         return;
     }
 
     if (collection.userId !== userId) {
-        res.status(403).json({ message: 'You are not authorized to update this collection' });
+        res.status(403).json({ message: getErrorMessage("COLLECTION.UNAUTHORIZED_UPDATE", lang) });
         return;
     }
 
@@ -129,21 +134,22 @@ export const updateCollection = asyncHandler(async (req: Request, res: Response)
 export const deleteCollection = asyncHandler(async (req: Request, res: Response) => {
     const collectionId = parseInt(req.params.id, 10);
     const userId = req.user!.id;
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (isNaN(collectionId)) {
-        res.status(400).json({ message: 'Invalid collection ID' });
+        res.status(400).json({ message: getErrorMessage("COLLECTION.INVALID_ID", lang) });
         return;
     }
 
     const collection = await collectionService.getCollectionDetails(collectionId);
 
     if (!collection) {
-        res.status(404).json({ message: 'Collection not found' });
+        res.status(404).json({ message: getErrorMessage("COLLECTION.NOT_FOUND", lang) });
         return;
     }
 
     if (collection.userId !== userId) {
-        res.status(403).json({ message: 'You are not authorized to delete this collection' });
+        res.status(403).json({ message: getErrorMessage("COLLECTION.UNAUTHORIZED_DELETE", lang) });
         return;
     }
 
@@ -158,31 +164,32 @@ export const deleteCollection = asyncHandler(async (req: Request, res: Response)
 export const addPhotoToCollection = asyncHandler(async (req: Request, res: Response) => {
     const { collectionId, photoId } = req.params;
     const userId = req.user!.id;
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     const collectionIdNum = parseInt(collectionId, 10);
     const photoIdNum = parseInt(photoId, 10);
 
     if (isNaN(collectionIdNum) || isNaN(photoIdNum)) {
-        res.status(400).json({ message: 'Invalid ID' });
+        res.status(400).json({ message: getErrorMessage("GLOBAL.INVALID_ID", lang) });
         return;
     }
 
     const collection = await collectionService.getCollectionDetails(collectionIdNum);
 
     if (!collection) {
-        res.status(404).json({ message: 'Collection not found' });
+        res.status(404).json({ message: getErrorMessage("COLLECTION.NOT_FOUND", lang) });
         return;
     }
 
     if (collection.userId !== userId) {
-        res.status(403).json({ message: 'You are not authorized to add photos to this collection' });
+        res.status(403).json({ message: getErrorMessage("COLLECTION.UNAUTHORIZED_ADD_PHOTO", lang) });
         return;
     }
 
     const result = await collectionService.addPhotoToCollection(collectionIdNum, photoIdNum);
 
     if (!result) {
-        res.status(409).json({ message: 'Photo already exists in the collection' });
+        res.status(409).json({ message: getErrorMessage("COLLECTION.PHOTO_ALREADY_EXISTS", lang) });
         return;
     }
 
@@ -196,12 +203,13 @@ export const addPhotoToCollection = asyncHandler(async (req: Request, res: Respo
 export const removePhotoFromCollection = asyncHandler(async (req: Request, res: Response) => {
     const { collectionId, photoId } = req.params;
     const userId = req.user!.id;
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     const collectionIdNum = parseInt(collectionId, 10);
     const photoIdNum = parseInt(photoId, 10);
 
     if (isNaN(collectionIdNum) || isNaN(photoIdNum)) {
-        res.status(400).json({ message: 'Invalid ID' });
+        res.status(400).json({ message: getErrorMessage("GLOBAL.INVALID_ID", lang) });
         return;
     }
 
@@ -213,7 +221,7 @@ export const removePhotoFromCollection = asyncHandler(async (req: Request, res: 
     }
 
     if (collection.userId !== userId) {
-        res.status(403).json({ message: 'You are not authorized to remove photos from this collection' });
+        res.status(403).json({ message: getErrorMessage("COLLECTION.UNAUTHORIZED_REMOVE_PHOTO", lang) });
         return;
     }
 
@@ -222,6 +230,6 @@ export const removePhotoFromCollection = asyncHandler(async (req: Request, res: 
         res.status(204).send();
     } catch (error) {
         // Prisma의 P2025 코드는 레코드를 찾지 못했을 때 발생합니다.
-        res.status(404).json({ message: 'Photo not found in the collection' });
+        res.status(404).json({ message: getErrorMessage("COLLECTION.PHOTO_NOT_FOUND", lang) });
     }
 });

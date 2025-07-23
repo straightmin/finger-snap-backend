@@ -1,4 +1,4 @@
-import { getMessage } from '../utils/messageMapper';
+import { getErrorMessage } from '../utils/messageMapper';
 import { PrismaClient } from '@prisma/client';
 import * as notificationService from './notification.service';
 
@@ -9,16 +9,16 @@ const prisma = new PrismaClient();
 const checkAccess = async (userId: number | undefined, photoId?: number, seriesId?: number) => {
     if (photoId) {
         const photo = await prisma.photo.findUnique({ where: { id: photoId } });
-        if (!photo || photo.deletedAt) throw new Error(getMessage('PHOTO_NOT_FOUND'));
-        if (!photo.isPublic && photo.userId !== userId) throw new Error(getMessage('PHOTO_IS_PRIVATE'));
+        if (!photo || photo.deletedAt) throw new Error(getErrorMessage("PHOTO.NOT_FOUND"));
+        if (!photo.isPublic && photo.userId !== userId) throw new Error(getErrorMessage('PHOTO.IS_PRIVATE'));
         return { ownerId: photo.userId };
     } else if (seriesId) {
         const series = await prisma.series.findUnique({ where: { id: seriesId } });
-        if (!series || series.deletedAt) throw new Error(getMessage('SERIES_NOT_FOUND'));
-        if (!series.isPublic && series.userId !== userId) throw new Error(getMessage('SERIES_IS_PRIVATE'));
+        if (!series || series.deletedAt) throw new Error(getErrorMessage('SERIES.NOT_FOUND'));
+        if (!series.isPublic && series.userId !== userId) throw new Error(getErrorMessage('SERIES.IS_PRIVATE'));
         return { ownerId: series.userId };
     } else {
-        throw new Error('Either photoId or seriesId must be provided');
+        throw new Error(getErrorMessage('COMMENT.TARGET_REQUIRED'));
     }
 };
 
@@ -37,9 +37,9 @@ export const createComment = async (data: CreateCommentData) => {
 
     if (parentId) {
         const parentComment = await prisma.comment.findUnique({ where: { id: parentId, deletedAt: null } });
-        if (!parentComment) throw new Error(getMessage('PARENT_COMMENT_NOT_FOUND'));
+        if (!parentComment) throw new Error(getErrorMessage('COMMENT.PARENT_NOT_FOUND'));
         if ((photoId && parentComment.photoId !== photoId) || (seriesId && parentComment.seriesId !== seriesId)) {
-            throw new Error(getMessage('PARENT_COMMENT_DOES_NOT_BELONG_TO_THIS_RESOURCE'));
+            throw new Error(getErrorMessage('COMMENT.PARENT_NOT_BELONG_TO_RESOURCE'));
         }
     }
 
@@ -119,11 +119,11 @@ export const deleteComment = async (commentId: number, userId: number) => {
     });
 
     if (!comment) {
-        throw new Error(getMessage('COMMENT_NOT_FOUND'));
+        throw new Error(getErrorMessage('COMMENT.NOT_FOUND'));
     }
 
     if (comment.userId !== userId) {
-        throw new Error(getMessage('UNAUTHORIZED_COMMENT_DELETION'));
+        throw new Error(getErrorMessage('COMMENT.UNAUTHORIZED_DELETE'));
     }
 
     return prisma.comment.update({

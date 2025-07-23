@@ -1,6 +1,7 @@
 // src/services/user.service.ts
 import { PrismaClient } from '@prisma/client';
 import { isFollowing } from './follow.service';
+import { getErrorMessage } from "../utils/messageMapper";
 
 const prisma = new PrismaClient();
 
@@ -26,7 +27,7 @@ export const getUserProfile = async (userId: number, currentUserId?: number): Pr
     });
 
     if (!user) {
-        throw new Error('User not found');
+        throw new Error(getErrorMessage('USER.NOT_FOUND'));
     }
 
     let isFollowed = false;
@@ -106,7 +107,7 @@ export const deleteUser = async (userId: number) => {
     });
 
     if (!user) {
-        throw new Error('User not found');
+        throw new Error(getErrorMessage('USER.NOT_FOUND'));
     }
 
     return prisma.user.update({

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import * as notificationService from '../services/notification.service';
 import { asyncHandler } from '../utils/asyncHandler';
+import { getErrorMessage, getSuccessMessage } from "../utils/messageMapper";
 
 export const getNotifications = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
@@ -14,11 +15,12 @@ export const getNotifications = asyncHandler(async (req: Request, res: Response)
 export const markAsRead = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
     const { notificationIds } = req.body;
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (!notificationIds || !Array.isArray(notificationIds) || notificationIds.length === 0) {
-        return res.status(400).json({ message: 'notificationIds must be a non-empty array' });
+        return res.status(400).json({ message: getErrorMessage("NOTIFICATION.IDS_REQUIRED", lang) });
     }
 
     await notificationService.markAsRead(userId, notificationIds);
-    res.status(200).json({ message: 'Notifications marked as read' });
+    res.status(200).json({ message: getSuccessMessage("NOTIFICATION.MARKED_READ", lang) });
 });

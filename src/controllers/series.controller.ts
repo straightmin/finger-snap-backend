@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import * as seriesService from '../services/series.service';
+import { getErrorMessage, getSuccessMessage } from "../utils/messageMapper";
 
 /**
  * 새 시리즈를 생성하는 컨트롤러 함수
@@ -10,9 +11,10 @@ import * as seriesService from '../services/series.service';
 export const createSeries = asyncHandler(async (req: Request, res: Response) => {
     const { title, description, coverPhotoId, isPublic } = req.body;
     const userId = req.user!.id;
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (!title) {
-        res.status(400).json({ message: 'Series title is required' });
+        res.status(400).json({ message: getErrorMessage("SERIES.TITLE_REQUIRED", lang) });
         return;
     }
 
@@ -27,16 +29,17 @@ export const createSeries = asyncHandler(async (req: Request, res: Response) => 
 export const getSeriesById = asyncHandler(async (req: Request, res: Response) => {
     const seriesId = parseInt(req.params.id, 10);
     const currentUserId = req.user?.id;
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (isNaN(seriesId)) {
-        res.status(400).json({ message: 'Invalid series ID' });
+        res.status(400).json({ message: getErrorMessage("SERIES.INVALID_ID", lang) });
         return;
     }
 
     const series = await seriesService.getSeriesById(seriesId, currentUserId);
 
     if (!series) {
-        res.status(404).json({ message: 'Series not found' });
+        res.status(404).json({ message: getErrorMessage("SERIES.NOT_FOUND", lang) });
         return;
     }
 
@@ -61,21 +64,22 @@ export const updateSeries = asyncHandler(async (req: Request, res: Response) => 
     const seriesId = parseInt(req.params.id, 10);
     const { title, description, coverPhotoId, isPublic } = req.body;
     const userId = req.user!.id;
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (isNaN(seriesId)) {
-        res.status(400).json({ message: 'Invalid series ID' });
+        res.status(400).json({ message: getErrorMessage("SERIES.INVALID_ID", lang) });
         return;
     }
 
     const series = await seriesService.getSeriesById(seriesId);
 
     if (!series) {
-        res.status(404).json({ message: 'Series not found' });
+        res.status(404).json({ message: getErrorMessage("SERIES.NOT_FOUND", lang) });
         return;
     }
 
     if (series.userId !== userId) {
-        res.status(403).json({ message: 'You are not authorized to update this series' });
+        res.status(403).json({ message: getErrorMessage("SERIES.UNAUTHORIZED_UPDATE", lang) });
         return;
     }
 
@@ -90,21 +94,22 @@ export const updateSeries = asyncHandler(async (req: Request, res: Response) => 
 export const deleteSeries = asyncHandler(async (req: Request, res: Response) => {
     const seriesId = parseInt(req.params.id, 10);
     const userId = req.user!.id;
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (isNaN(seriesId)) {
-        res.status(400).json({ message: 'Invalid series ID' });
+        res.status(400).json({ message: getErrorMessage("SERIES.INVALID_ID", lang) });
         return;
     }
 
     const series = await seriesService.getSeriesById(seriesId);
 
     if (!series) {
-        res.status(404).json({ message: 'Series not found' });
+        res.status(404).json({ message: getErrorMessage("SERIES.NOT_FOUND", lang) });
         return;
     }
 
     if (series.userId !== userId) {
-        res.status(403).json({ message: 'You are not authorized to delete this series' });
+        res.status(403).json({ message: getErrorMessage("SERIES.UNAUTHORIZED_DELETE", lang) });
         return;
     }
 
@@ -119,24 +124,25 @@ export const deleteSeries = asyncHandler(async (req: Request, res: Response) => 
 export const addPhotoToSeries = asyncHandler(async (req: Request, res: Response) => {
     const { seriesId, photoId } = req.params;
     const userId = req.user!.id;
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     const seriesIdNum = parseInt(seriesId, 10);
     const photoIdNum = parseInt(photoId, 10);
 
     if (isNaN(seriesIdNum) || isNaN(photoIdNum)) {
-        res.status(400).json({ message: 'Invalid ID' });
+        res.status(400).json({ message: getErrorMessage("GLOBAL.INVALID_ID", lang) });
         return;
     }
 
     const series = await seriesService.getSeriesById(seriesIdNum);
 
     if (!series) {
-        res.status(404).json({ message: 'Series not found' });
+        res.status(404).json({ message: getErrorMessage("SERIES.NOT_FOUND", lang) });
         return;
     }
 
     if (series.userId !== userId) {
-        res.status(403).json({ message: 'You are not authorized to add photos to this series' });
+        res.status(403).json({ message: getErrorMessage("SERIES.UNAUTHORIZED_ADD_PHOTO", lang) });
         return;
     }
 
@@ -151,24 +157,25 @@ export const addPhotoToSeries = asyncHandler(async (req: Request, res: Response)
 export const removePhotoFromSeries = asyncHandler(async (req: Request, res: Response) => {
     const { seriesId, photoId } = req.params;
     const userId = req.user!.id;
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     const seriesIdNum = parseInt(seriesId, 10);
     const photoIdNum = parseInt(photoId, 10);
 
     if (isNaN(seriesIdNum) || isNaN(photoIdNum)) {
-        res.status(400).json({ message: 'Invalid ID' });
+        res.status(400).json({ message: getErrorMessage("GLOBAL.INVALID_ID", lang) });
         return;
     }
 
     const series = await seriesService.getSeriesById(seriesIdNum);
 
     if (!series) {
-        res.status(404).json({ message: 'Series not found' });
+        res.status(404).json({ message: getErrorMessage("SERIES.NOT_FOUND", lang) });
         return;
     }
 
     if (series.userId !== userId) {
-        res.status(403).json({ message: 'You are not authorized to remove photos from this series' });
+        res.status(403).json({ message: getErrorMessage("SERIES.UNAUTHORIZED_REMOVE_PHOTO", lang) });
         return;
     }
 
@@ -176,7 +183,7 @@ export const removePhotoFromSeries = asyncHandler(async (req: Request, res: Resp
         await seriesService.removePhotoFromSeries(seriesIdNum, photoIdNum);
         res.status(204).send();
     } catch (error) {
-        res.status(404).json({ message: 'Photo not found in the series' });
+        res.status(404).json({ message: getErrorMessage("SERIES.PHOTO_NOT_FOUND", lang) });
     }
 });
 
@@ -188,24 +195,25 @@ export const updateSeriesPhotoOrder = asyncHandler(async (req: Request, res: Res
     const seriesId = parseInt(req.params.seriesId, 10);
     const { photoOrders } = req.body; // photoOrders는 [{ photoId: number, position: number }] 형태
     const userId = req.user!.id;
+    const lang = req.headers["accept-language"] === "en" ? "en" : "ko";
 
     if (isNaN(seriesId) || !Array.isArray(photoOrders)) {
-        res.status(400).json({ message: 'Invalid input' });
+        res.status(400).json({ message: getErrorMessage("GLOBAL.INVALID_INPUT", lang) });
         return;
     }
 
     const series = await seriesService.getSeriesById(seriesId);
 
     if (!series) {
-        res.status(404).json({ message: 'Series not found' });
+        res.status(404).json({ message: getErrorMessage("SERIES.NOT_FOUND", lang) });
         return;
     }
 
     if (series.userId !== userId) {
-        res.status(403).json({ message: 'You are not authorized to update this series' });
+        res.status(403).json({ message: getErrorMessage("SERIES.UNAUTHORIZED_UPDATE", lang) });
         return;
     }
 
     await seriesService.updateSeriesPhotoOrder(seriesId, photoOrders);
-    res.status(200).json({ message: 'Photo order updated successfully' });
+    res.status(200).json({ message: getSuccessMessage("SERIES.PHOTO_ORDER_UPDATED", lang) });
 });

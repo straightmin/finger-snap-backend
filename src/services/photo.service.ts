@@ -2,7 +2,7 @@ import { PrismaClient, Photo, User } from '@prisma/client';
 import sharp from 'sharp';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import s3Client, { bucketName } from '../lib/s3Client';
-import { getMessage } from '../utils/messageMapper';
+import { getMessage, getErrorMessage } from '../utils/messageMapper';
 import config from '../config';
 import { isFollowing } from './follow.service'; // isFollowing 함수 임포트
 
@@ -225,11 +225,11 @@ export const deletePhoto = async (photoId: number, userId: number) => {
     });
 
     if (!photo) {
-        throw new Error(getMessage('PHOTO_NOT_FOUND'));
+        throw new Error(getErrorMessage('PHOTO.NOT_FOUND'));
     }
 
     if (photo.userId !== userId) {
-        throw new Error(getMessage('UNAUTHORIZED'));
+        throw new Error(getErrorMessage('GLOBAL.UNAUTHORIZED'));
     }
 
     return prisma.photo.update({
@@ -252,11 +252,11 @@ export const updatePhotoVisibility = async (photoId: number, userId: number, isP
     });
 
     if (!photo) {
-        throw new Error(getMessage('PHOTO_NOT_FOUND'));
+        throw new Error(getErrorMessage('PHOTO.NOT_FOUND'));
     }
 
     if (photo.userId !== userId) {
-        throw new Error(getMessage('UNAUTHORIZED'));
+        throw new Error(getErrorMessage('GLOBAL.UNAUTHORIZED'));
     }
 
     return prisma.photo.update({

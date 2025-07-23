@@ -1,6 +1,7 @@
 // src/services/follow.service.ts
 import { getPrismaClient } from './prismaClient';
 import * as notificationService from './notification.service';
+import { getSuccessMessage, getErrorMessage } from '../utils/messageMapper';
 
 // Prisma 클라이언트 인스턴스를 생성합니다.
 const prisma = getPrismaClient();
@@ -13,7 +14,7 @@ const prisma = getPrismaClient();
  */
 export const toggleFollow = async (followerId: number, followingId: number) => {
     if (followerId === followingId) {
-        throw new Error('CANNOT_FOLLOW_YOURSELF');
+        throw new Error(getErrorMessage('FOLLOW.CANNOT_FOLLOW_SELF'));
     }
 
     const existingFollow = await prisma.follow.findUnique({
@@ -32,7 +33,7 @@ export const toggleFollow = async (followerId: number, followingId: number) => {
                 id: existingFollow.id,
             },
         });
-        return { isFollowing: false, message: 'Successfully unfollowed.' };
+        return { isFollowing: false, message: getSuccessMessage('FOLLOW.UNFOLLOWED') };
     } else {
         // 팔로우
         const newFollow = await prisma.follow.create({
@@ -50,7 +51,7 @@ export const toggleFollow = async (followerId: number, followingId: number) => {
             followId: newFollow.id,
         });
 
-        return { isFollowing: true, message: 'Successfully followed.' };
+        return { isFollowing: true, message: getSuccessMessage('FOLLOW.FOLLOWED') };
     }
 };
 
