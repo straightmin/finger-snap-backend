@@ -68,14 +68,31 @@ export const getPhotos = async (sortBy: string, currentUserId?: number) => {
     }
 
     // 각 사진의 작성자에 대한 팔로우 상태 추가
-    const photosWithFollowStatus = await Promise.all(photos.map(async (photo) => {
+    // Collect all unique author IDs from the photos
+    const authorIds = Array.from(new Set(photos.map(photo => photo.author?.id).filter(id => id !== undefined)));
+
+    // Batch query to check follow status for all authors
+    const followStatuses = currentUserId
+        ? await prisma.follow.findMany({
+              where: {
+                  followerId: currentUserId,
+                  followingId: { in: authorIds },
+              },
+              select: { followingId: true },
+          })
+        : [];
+
+    const followedAuthorIds = new Set(followStatuses.map(status => status.followingId));
+
+    // Map follow status back to photos
+    const photosWithFollowStatus = photos.map(photo => {
         let authorWithFollowStatus: AuthorWithFollowStatus | undefined;
         if (photo.author) {
-            const followed = currentUserId ? await isFollowing(currentUserId, photo.author.id) : false;
-            authorWithFollowStatus = { ...photo.author, isFollowed: followed };
+            const isFollowed = currentUserId ? followedAuthorIds.has(photo.author.id) : false;
+            authorWithFollowStatus = { ...photo.author, isFollowed };
         }
         return { ...photo, author: authorWithFollowStatus };
-    }));
+    });
 
     return photosWithFollowStatus;
 };
