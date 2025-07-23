@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 declare global {
     namespace Express {
         interface Request {
-            lang?: "ko" | "en";
+            lang?: "ko" | "en" | "ja";
         }
     }
 }
