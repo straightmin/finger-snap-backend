@@ -1,11 +1,13 @@
 import messages_kor from "../i18n/messages/ko.json";
 import messages_eng from "../i18n/messages/en.json";
+import messages_jpn from "../i18n/messages/ja.json";
 
-type Language = "ko" | "en";
+type Language = "ko" | "en" | "ja";
 
 const messages: Record<Language, { [key: string]: string }> = {
     ko: messages_kor as { [key: string]: string },
     en: messages_eng as { [key: string]: string },
+    ja: messages_jpn as { [key: string]: string },
 };
 
 const formatMessage = (message: string, replacements?: { [key: string]: string | number }) => {
