@@ -149,14 +149,32 @@ export const getUserSeries = async (userId: number, currentUserId?: number) => {
         },
     });
 
-    const seriesWithFollowStatus = await Promise.all(seriesList.map(async (series) => {
+    const authorIds = seriesList
+        .map((series) => series.author?.id)
+        .filter((id): id is number => id !== undefined);
+
+    const followStatuses = currentUserId
+        ? await prisma.follow.findMany({
+              where: {
+                  followerId: currentUserId,
+                  followingId: { in: authorIds },
+              },
+              select: { followingId: true },
+          })
+        : [];
+
+    const followStatusMap = new Map(
+        followStatuses.map((status) => [status.followingId, true])
+    );
+
+    const seriesWithFollowStatus = seriesList.map((series) => {
         let authorWithFollowStatus: AuthorWithFollowStatus | undefined;
         if (series.author) {
-            const followed = currentUserId ? await isFollowing(currentUserId, series.author.id) : false;
-            authorWithFollowStatus = { ...series.author, isFollowed: followed };
+            const isFollowed = followStatusMap.get(series.author.id) || false;
+            authorWithFollowStatus = { ...series.author, isFollowed };
         }
         return { ...series, author: authorWithFollowStatus };
-    }));
+    });
 
     return seriesWithFollowStatus;
 };
