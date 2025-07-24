@@ -64,7 +64,6 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 // login api
 export const login = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
-    
 
     // 필수값 확인
     if (!email || !password) {
@@ -113,8 +112,6 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 export const me = async (req: Request, res: Response) => {
     // authenticateToken 미들웨어에서 req.user에 사용자 정보가 추가됩니다.
     // 따라서 req.user가 존재하는지 확인하고 반환합니다.
-
-    
     if (req.user) {
         res.status(200).json(req.user); // 인증된 사용자 정보 반환
     } else {
@@ -125,7 +122,6 @@ export const me = async (req: Request, res: Response) => {
     }
 };
 export const ping = async (req: Request, res: Response) => {
-    
     res.status(200).json({ message: getMessage("INFO.GLOBAL.PONG", req.lang) });
 };
 export const health = async (req: Request, res: Response) => {

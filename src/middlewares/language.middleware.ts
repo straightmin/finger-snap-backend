@@ -6,7 +6,7 @@ declare module 'express' {
     }
 }
 
-export const setLanguage: (req: Request, res: Response, next: NextFunction) => void = (req, res, next) => {
+export const setLanguage = (req: Request, res: Response, next: NextFunction) => {
     const acceptLanguage = req.headers["accept-language"];
     if (acceptLanguage) {
         const languages = acceptLanguage.split(',').map(lang => lang.split(';')[0].trim());

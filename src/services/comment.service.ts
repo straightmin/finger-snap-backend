@@ -93,8 +93,8 @@ export const getComments = async (userId: number | undefined, target: { photoId?
     });
 
     interface NestedComment extends Comment {
-    replies: NestedComment[];
-}
+        replies: NestedComment[];
+    }
 
     const commentMap = new Map<number, NestedComment>();
     const rootComments: NestedComment[] = [];

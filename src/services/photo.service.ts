@@ -74,12 +74,12 @@ export const getPhotos = async (sortBy: string, currentUserId?: number) => {
     // Batch query to check follow status for all authors
     const followStatuses = currentUserId
         ? await prisma.follow.findMany({
-              where: {
-                  followerId: currentUserId,
-                  followingId: { in: authorIds },
-              },
-              select: { followingId: true },
-          })
+            where: {
+                followerId: currentUserId,
+                followingId: { in: authorIds },
+            },
+            select: { followingId: true },
+        })
         : [];
 
     const followedAuthorIds = new Set(followStatuses.map(status => status.followingId));
