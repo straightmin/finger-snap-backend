@@ -50,7 +50,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // 사용자 생성
-    const user = await prisma.user.create({
+    await prisma.user.create({
         data: {
             username,
             email,
@@ -64,7 +64,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 // login api
 export const login = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
-    const lang = req.lang;
+    
 
     // 필수값 확인
     if (!email || !password) {
@@ -114,7 +114,7 @@ export const me = async (req: Request, res: Response) => {
     // authenticateToken 미들웨어에서 req.user에 사용자 정보가 추가됩니다.
     // 따라서 req.user가 존재하는지 확인하고 반환합니다.
 
-    const lang = req.lang;
+    
     if (req.user) {
         res.status(200).json(req.user); // 인증된 사용자 정보 반환
     } else {
@@ -125,7 +125,7 @@ export const me = async (req: Request, res: Response) => {
     }
 };
 export const ping = async (req: Request, res: Response) => {
-    const lang = req.lang;
+    
     res.status(200).json({ message: getMessage("INFO.GLOBAL.PONG", req.lang) });
 };
 export const health = async (req: Request, res: Response) => {

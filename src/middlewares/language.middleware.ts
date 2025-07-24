@@ -1,10 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 
-declare global {
-    namespace Express {
-        interface Request {
-            lang?: "ko" | "en" | "ja";
-        }
+declare module 'express' {
+    interface Request {
+        lang?: "ko" | "en" | "ja";
     }
 }
 

@@ -176,7 +176,7 @@ export const removePhotoFromSeries = asyncHandler(async (req: Request, res: Resp
     try {
         await seriesService.removePhotoFromSeries(seriesIdNum, photoIdNum);
         res.status(204).send();
-    } catch (error) {
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
         res.status(404).json({ message: getErrorMessage("SERIES.PHOTO_NOT_FOUND", req.lang) });
     }
 });

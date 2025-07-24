@@ -88,7 +88,7 @@ export const updatePhotoVisibility = asyncHandler(async (req: Request, res: Resp
         return;
     }
 
-    const updatedPhoto = await photoService.updatePhotoVisibility(photoId, userId, isPublic);
+    const updatedPhoto = await photoService.updatePhotoVisibility(photoId, userId, isPublic, req.lang || 'ko');
 
     res.status(200).json(updatedPhoto);
 });
@@ -103,7 +103,7 @@ export const deletePhoto = asyncHandler(async (req: Request, res: Response) => {
     const photoId = parseInt(req.params.id, 10);
     const userId = req.user!.id;
 
-    await photoService.deletePhoto(photoId, userId);
+    await photoService.deletePhoto(photoId, userId, req.lang || 'ko');
 
     res.status(200).json({ message: getSuccessMessage("PHOTO.DELETED", req.lang) });
 });

@@ -17,7 +17,7 @@ export const toggleCollection = asyncHandler(async (req: Request, res: Response)
         return;
     }
 
-    const result = await collectionService.togglePhotoInDefaultCollection(userId, photoId);
+    const result = await collectionService.togglePhotoInDefaultCollection(userId, photoId, req.lang || 'ko');
     res.status(200).json(result);
 });
 
@@ -221,7 +221,7 @@ export const removePhotoFromCollection = asyncHandler(async (req: Request, res: 
     try {
         await collectionService.removePhotoFromCollection(collectionIdNum, photoIdNum);
         res.status(204).send();
-    } catch (error) {
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
         // Prisma의 P2025 코드는 레코드를 찾지 못했을 때 발생합니다.
         res.status(404).json({ message: getErrorMessage("COLLECTION.PHOTO_NOT_FOUND", req.lang) });
     }

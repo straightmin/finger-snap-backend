@@ -1,7 +1,7 @@
 // src/services/user.service.ts
 import { PrismaClient } from '@prisma/client';
 import { isFollowing } from './follow.service';
-import { getErrorMessage } from "../utils/messageMapper";
+import { getErrorMessage, Language } from "../utils/messageMapper";
 
 const prisma = new PrismaClient();
 
@@ -14,7 +14,7 @@ type UserProfileWithFollowStatus = {
     isFollowed: boolean;
 };
 
-export const getUserProfile = async (userId: number, currentUserId?: number): Promise<UserProfileWithFollowStatus> => {
+export const getUserProfile = async (userId: number, currentUserId?: number, lang?: Language): Promise<UserProfileWithFollowStatus> => {
     const user = await prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -27,7 +27,7 @@ export const getUserProfile = async (userId: number, currentUserId?: number): Pr
     });
 
     if (!user) {
-        throw new Error(getErrorMessage('USER.NOT_FOUND'));
+        throw new Error(getErrorMessage('USER.NOT_FOUND', lang));
     }
 
     let isFollowed = false;
@@ -101,13 +101,13 @@ export const getUserPhotos = async (userId: number) => {
  * @param userId 삭제할 사용자의 ID
  * @returns 업데이트된 사용자 객체
  */
-export const deleteUser = async (userId: number) => {
+export const deleteUser = async (userId: number, lang?: Language) => {
     const user = await prisma.user.findUnique({
         where: { id: userId },
     });
 
     if (!user) {
-        throw new Error(getErrorMessage('USER.NOT_FOUND'));
+        throw new Error(getErrorMessage('USER.NOT_FOUND', lang));
     }
 
     return prisma.user.update({

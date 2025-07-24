@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as likeService from '../services/like.service';
+import { LikeTarget } from '../services/like.service';
 import { getErrorMessage } from "../utils/messageMapper";
 import { asyncHandler } from '../utils/asyncHandler';
 
@@ -16,7 +17,7 @@ export const toggleLike = asyncHandler(async (req: Request, res: Response) => {
         return res.status(400).json({ message: getErrorMessage("LIKE.TARGET_REQUIRED", req.lang) });
     }
 
-    let target: any;
+    let target: LikeTarget | undefined;
     if (photoId) {
         target = { photoId: Number(photoId) };
     } else if (seriesId) {
@@ -25,7 +26,7 @@ export const toggleLike = asyncHandler(async (req: Request, res: Response) => {
         target = { commentId: Number(commentId) };
     }
 
-    const result = await likeService.toggleLike(userId, target);
+    const result = await likeService.toggleLike(userId, target!, req.lang || 'ko');
 
     res.status(200).json(result);
 });

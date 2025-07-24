@@ -9,15 +9,13 @@ import config from '../config';
 const prisma = getPrismaClient();
 
 // Request 객체에 user 속성을 추가하기 위한 타입 확장
-declare global {
-    namespace Express {
-        interface Request {
-            user?: {
-                id: number;
-                email: string;
-                username: string;
-            };
-        }
+declare module 'express' {
+    interface Request {
+        user?: {
+            id: number;
+            email: string;
+            username: string;
+        };
     }
 }
 

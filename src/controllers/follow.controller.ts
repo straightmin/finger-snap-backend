@@ -16,7 +16,7 @@ export const toggleFollow = asyncHandler(async (req: Request, res: Response) => 
         return res.status(401).json({ message: getErrorMessage("GLOBAL.UNAUTHORIZED", req.lang) });
     }
 
-    const result = await followService.toggleFollow(followerId, followingId);
+    const result = await followService.toggleFollow(followerId, followingId, req.lang || 'ko');
     res.status(200).json(result);
 });
 

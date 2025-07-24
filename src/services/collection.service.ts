@@ -1,6 +1,6 @@
 import { PrismaClient, User } from '@prisma/client';
 import { isFollowing } from './follow.service';
-import { getSuccessMessage } from "../utils/messageMapper";
+import { getSuccessMessage, Language } from "../utils/messageMapper";
 
 const prisma = new PrismaClient();
 
@@ -38,7 +38,7 @@ const findOrCreateDefaultCollection = async (userId: number) => {
  * @param photoId 사진 ID
  * @returns 컬렉션 추가/제거 성공 여부
  */
-export const togglePhotoInDefaultCollection = async (userId: number, photoId: number) => {
+export const togglePhotoInDefaultCollection = async (userId: number, photoId: number, lang: Language) => {
     const collection = await findOrCreateDefaultCollection(userId);
 
     const existingCollectionPhoto = await prisma.collectionPhoto.findUnique({
@@ -55,7 +55,7 @@ export const togglePhotoInDefaultCollection = async (userId: number, photoId: nu
         await prisma.collectionPhoto.delete({
             where: { id: existingCollectionPhoto.id },
         });
-        return { added: false, message: getSuccessMessage("COLLECTION.PHOTO_REMOVED", "ko") };
+        return { added: false, message: getSuccessMessage("COLLECTION.PHOTO_REMOVED", lang) };
     } else {
         // 컬렉션에 없으면 추가
         await prisma.collectionPhoto.create({
@@ -64,7 +64,7 @@ export const togglePhotoInDefaultCollection = async (userId: number, photoId: nu
                 photoId: photoId,
             },
         });
-        return { added: true, message: getSuccessMessage("COLLECTION.PHOTO_ADDED", "ko") };
+        return { added: true, message: getSuccessMessage("COLLECTION.PHOTO_ADDED", lang) };
     }
 };
 

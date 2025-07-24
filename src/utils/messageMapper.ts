@@ -2,7 +2,7 @@ import messages_kor from "../i18n/messages/ko.json";
 import messages_eng from "../i18n/messages/en.json";
 import messages_jpn from "../i18n/messages/ja.json";
 
-type Language = "ko" | "en" | "ja";
+export type Language = "ko" | "en" | "ja";
 
 const messages: Record<Language, { [key: string]: string }> = {
     ko: messages_kor as { [key: string]: string },
