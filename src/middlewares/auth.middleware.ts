@@ -3,21 +3,19 @@
 import { getPrismaClient } from "../services/prismaClient";
 import { Request, Response, RequestHandler, NextFunction } from 'express';
 import jwt from "jsonwebtoken";
-import { getMessage } from "../utils/messageMapper"; // 메시지 매퍼 임포트
+import { getErrorMessage } from "../utils/messageMapper"; // 메시지 매퍼 임포트
 import config from '../config';
 
 const prisma = getPrismaClient();
 
 // Request 객체에 user 속성을 추가하기 위한 타입 확장
-declare global {
-    namespace Express {
-        interface Request {
-            user?: {
-                id: number;
-                email: string;
-                username: string;
-            };
-        }
+declare module 'express' {
+    interface Request {
+        user?: {
+            id: number;
+            email: string;
+            username: string;
+        };
     }
 }
 
@@ -30,7 +28,7 @@ export const authenticateToken: RequestHandler = async (req: Request, res: Respo
 
     // 2. 토큰이 없는 경우 401 Unauthorized 응답
     if (token == null) {
-        res.status(401).json({ message: getMessage("AUTHENTICATION_TOKEN_REQUIRED") });
+        res.status(401).json({ message: getErrorMessage("AUTH.AUTHENTICATION_TOKEN_REQUIRED", req.lang) });
         return;
     }
 
@@ -51,7 +49,7 @@ export const authenticateToken: RequestHandler = async (req: Request, res: Respo
 
         // 5. 사용자 정보가 없는 경우 403 Forbidden 응답 (유효하지 않은 토큰 또는 사용자 삭제)
         if (!user) {
-            res.status(403).json({ message: getMessage("INVALID_TOKEN_OR_USER_NOT_FOUND") });
+            res.status(403).json({ message: getErrorMessage("AUTH.INVALID_TOKEN_OR_USER_NOT_FOUND", req.lang) });
             return;
         }
 
@@ -64,7 +62,7 @@ export const authenticateToken: RequestHandler = async (req: Request, res: Respo
     } catch (err) {
         // 8. 토큰 검증 실패 (만료, 위조 등) 시 403 Forbidden 응답
         console.error("JWT verification error:", err);
-        res.status(403).json({ message: getMessage("INVALID_TOKEN_OR_USER_NOT_FOUND") });
+        res.status(403).json({ message: getErrorMessage("AUTH.INVALID_TOKEN_OR_USER_NOT_FOUND", req.lang) });
         return;
     }
 };

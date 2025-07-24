@@ -1,8 +1,8 @@
-import { PrismaClient, Photo, User } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 import sharp from 'sharp';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import s3Client, { bucketName } from '../lib/s3Client';
-import { getMessage } from '../utils/messageMapper';
+import { getErrorMessage, Language } from '../utils/messageMapper';
 import config from '../config';
 import { isFollowing } from './follow.service'; // isFollowing 함수 임포트
 
@@ -74,12 +74,12 @@ export const getPhotos = async (sortBy: string, currentUserId?: number) => {
     // Batch query to check follow status for all authors
     const followStatuses = currentUserId
         ? await prisma.follow.findMany({
-              where: {
-                  followerId: currentUserId,
-                  followingId: { in: authorIds },
-              },
-              select: { followingId: true },
-          })
+            where: {
+                followerId: currentUserId,
+                followingId: { in: authorIds },
+            },
+            select: { followingId: true },
+        })
         : [];
 
     const followedAuthorIds = new Set(followStatuses.map(status => status.followingId));
@@ -219,17 +219,17 @@ export const createPhoto = async (photoData: {
  * @returns 업데이트된 사진 객체
  * @throws Error 사진이 존재하지 않거나 권한이 없는 경우
  */
-export const deletePhoto = async (photoId: number, userId: number) => {
+export const deletePhoto = async (photoId: number, userId: number, lang: Language) => {
     const photo = await prisma.photo.findUnique({
         where: { id: photoId },
     });
 
     if (!photo) {
-        throw new Error(getMessage('PHOTO_NOT_FOUND'));
+        throw new Error(getErrorMessage('PHOTO.NOT_FOUND', lang));
     }
 
     if (photo.userId !== userId) {
-        throw new Error(getMessage('UNAUTHORIZED'));
+        throw new Error(getErrorMessage('GLOBAL.UNAUTHORIZED', lang));
     }
 
     return prisma.photo.update({
@@ -246,17 +246,17 @@ export const deletePhoto = async (photoId: number, userId: number) => {
  * @returns 업데이트된 사진 객체
  * @throws Error 사진이 존재하지 않거나 권한이 없는 경우
  */
-export const updatePhotoVisibility = async (photoId: number, userId: number, isPublic: boolean) => {
+export const updatePhotoVisibility = async (photoId: number, userId: number, isPublic: boolean, lang: Language) => {
     const photo = await prisma.photo.findUnique({
         where: { id: photoId },
     });
 
     if (!photo) {
-        throw new Error(getMessage('PHOTO_NOT_FOUND'));
+        throw new Error(getErrorMessage('PHOTO.NOT_FOUND', lang));
     }
 
     if (photo.userId !== userId) {
-        throw new Error(getMessage('UNAUTHORIZED'));
+        throw new Error(getErrorMessage('GLOBAL.UNAUTHORIZED', lang));
     }
 
     return prisma.photo.update({

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import * as commentService from '../services/comment.service';
 import { asyncHandler } from '../utils/asyncHandler';
+import { getErrorMessage, getSuccessMessage } from "../utils/messageMapper";
 
 export const createComment = asyncHandler(async (req: Request, res: Response) => {
     const { photoId, seriesId } = req.params;
@@ -8,7 +9,7 @@ export const createComment = asyncHandler(async (req: Request, res: Response) =>
     const userId = req.user!.id;
 
     if (!content || content.trim() === '') {
-        return res.status(400).json({ message: 'COMMENT_CONTENT_CANNOT_BE_EMPTY' });
+        return res.status(400).json({ message: getErrorMessage("COMMENT.CONTENT_EMPTY", req.lang) });
     }
 
     const newComment = await commentService.createComment({
@@ -17,7 +18,7 @@ export const createComment = asyncHandler(async (req: Request, res: Response) =>
         parentId: parentId ? parseInt(parentId, 10) : undefined,
         photoId: photoId ? parseInt(photoId, 10) : undefined,
         seriesId: seriesId ? parseInt(seriesId, 10) : undefined,
-    });
+    }, req.lang || 'ko');
 
     res.status(201).json(newComment);
 });
@@ -29,11 +30,11 @@ export const getComments = asyncHandler(async (req: Request, res: Response) => {
 
     let comments;
     if (photoId) {
-        comments = await commentService.getComments(userId, { photoId: parseInt(photoId, 10) });
+        comments = await commentService.getComments(userId, { photoId: parseInt(photoId, 10) }, req.lang || 'ko');
     } else if (seriesId) {
-        comments = await commentService.getComments(userId, { seriesId: parseInt(seriesId, 10) });
+        comments = await commentService.getComments(userId, { seriesId: parseInt(seriesId, 10) }, req.lang || 'ko');
     } else {
-        return res.status(400).json({ message: 'Either photoId or seriesId must be provided' });
+        return res.status(400).json({ message: getErrorMessage("COMMENT.TARGET_REQUIRED", req.lang) });
     }
 
     res.status(200).json(comments);
@@ -43,7 +44,7 @@ export const deleteComment = asyncHandler(async (req: Request, res: Response) =>
     const commentId = parseInt(req.params.commentId, 10);
     const userId = req.user!.id;
 
-    await commentService.deleteComment(commentId, userId);
+    await commentService.deleteComment(commentId, userId, req.lang || 'ko');
 
-    res.status(200).json({ message: 'COMMENT_DELETED_SUCCESSFULLY' });
+    res.status(200).json({ message: getSuccessMessage("COMMENT.DELETED", req.lang) });
 });

@@ -1,30 +1,32 @@
-import { getMessage } from '../utils/messageMapper';
+import { getMessage, getErrorMessage, Language } from '../utils/messageMapper';
 import { getPrismaClient } from './prismaClient';
 import * as notificationService from './notification.service';
 
 const prisma = getPrismaClient();
 
-type LikeTarget =
+export type LikeTarget =
     | { photoId: number; seriesId?: never; commentId?: never }
     | { photoId?: never; seriesId: number; commentId?: never }
     | { photoId?: never; seriesId?: never; commentId: number };
 
-export const toggleLike = async (userId: number, target: LikeTarget) => {
+type LikeWhereClause = { userId_photoId: { userId: number; photoId: number; } } | { userId_seriesId: { userId: number; seriesId: number; } } | { userId_commentId: { userId: number; commentId: number; } };
+
+export const toggleLike = async (userId: number, target: LikeTarget, lang: Language) => {
     const { photoId, seriesId, commentId } = target;
 
-    let likeWhere: any;
+    let likeWhere: LikeWhereClause;
     let targetOwnerId: number;
 
     if (photoId) {
         const photo = await prisma.photo.findUnique({ where: { id: photoId } });
-        if (!photo || photo.deletedAt) throw new Error(getMessage('PHOTO_NOT_FOUND'));
-        if (!photo.isPublic && photo.userId !== userId) throw new Error(getMessage('PHOTO_IS_PRIVATE'));
+        if (!photo || photo.deletedAt) throw new Error(getErrorMessage('PHOTO.NOT_FOUND', lang));
+        if (!photo.isPublic && photo.userId !== userId) throw new Error(getErrorMessage('PHOTO.IS_PRIVATE', lang));
         targetOwnerId = photo.userId;
         likeWhere = { userId_photoId: { userId, photoId } };
     } else if (seriesId) {
         const series = await prisma.series.findUnique({ where: { id: seriesId } });
-        if (!series || series.deletedAt) throw new Error(getMessage('SERIES_NOT_FOUND'));
-        if (!series.isPublic && series.userId !== userId) throw new Error(getMessage('SERIES_IS_PRIVATE'));
+        if (!series || series.deletedAt) throw new Error(getErrorMessage('SERIES.NOT_FOUND', lang));
+        if (!series.isPublic && series.userId !== userId) throw new Error(getErrorMessage('SERIES.IS_PRIVATE', lang));
         targetOwnerId = series.userId;
         likeWhere = { userId_seriesId: { userId, seriesId } };
     } else if (commentId) {
@@ -32,18 +34,18 @@ export const toggleLike = async (userId: number, target: LikeTarget) => {
             where: { id: commentId },
             include: { photo: true, series: true }
         });
-        if (!comment || comment.deletedAt) throw new Error(getMessage('COMMENT_NOT_FOUND'));
+        if (!comment || comment.deletedAt) throw new Error(getErrorMessage('COMMENT.NOT_FOUND', lang));
 
         // Check access to parent resource
         if (comment.photo) {
-            if (!comment.photo.isPublic && comment.photo.userId !== userId) throw new Error(getMessage('PHOTO_IS_PRIVATE'));
+            if (!comment.photo.isPublic && comment.photo.userId !== userId) throw new Error(getErrorMessage('PHOTO.IS_PRIVATE', lang));
         } else if (comment.series) {
-            if (!comment.series.isPublic && comment.series.userId !== userId) throw new Error(getMessage('SERIES_IS_PRIVATE'));
+            if (!comment.series.isPublic && comment.series.userId !== userId) throw new Error(getErrorMessage('SERIES.IS_PRIVATE', lang));
         }
         targetOwnerId = comment.userId;
         likeWhere = { userId_commentId: { userId, commentId } };
     } else {
-        throw new Error('Invalid like target');
+        throw new Error(getErrorMessage('LIKE.INVALID_TARGET', lang));
     }
 
     const existingLike = await prisma.like.findUnique({ where: likeWhere });
@@ -51,7 +53,7 @@ export const toggleLike = async (userId: number, target: LikeTarget) => {
     if (existingLike) {
         await prisma.like.delete({ where: { id: existingLike.id } });
         const targetType = photoId ? 'Photo' : seriesId ? 'Series' : 'Comment';
-        return { message: `${targetType} unliked`, liked: false };
+        return { message: getMessage('INFO.LIKE.TARGET_UNLIKED', lang, { targetType }), liked: false };
     } else {
         const newLike = await prisma.like.create({
             data: { userId, ...target },
@@ -66,6 +68,6 @@ export const toggleLike = async (userId: number, target: LikeTarget) => {
         });
 
         const targetType = photoId ? 'Photo' : seriesId ? 'Series' : 'Comment';
-        return { message: `${targetType} liked`, liked: true };
+        return { message: getMessage('INFO.LIKE.TARGET_LIKED', lang, { targetType }), liked: true };
     }
 };

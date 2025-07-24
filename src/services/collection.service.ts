@@ -1,5 +1,6 @@
 import { PrismaClient, User } from '@prisma/client';
 import { isFollowing } from './follow.service';
+import { getSuccessMessage, Language } from "../utils/messageMapper";
 
 const prisma = new PrismaClient();
 
@@ -37,7 +38,7 @@ const findOrCreateDefaultCollection = async (userId: number) => {
  * @param photoId 사진 ID
  * @returns 컬렉션 추가/제거 성공 여부
  */
-export const togglePhotoInDefaultCollection = async (userId: number, photoId: number) => {
+export const togglePhotoInDefaultCollection = async (userId: number, photoId: number, lang: Language) => {
     const collection = await findOrCreateDefaultCollection(userId);
 
     const existingCollectionPhoto = await prisma.collectionPhoto.findUnique({
@@ -54,7 +55,7 @@ export const togglePhotoInDefaultCollection = async (userId: number, photoId: nu
         await prisma.collectionPhoto.delete({
             where: { id: existingCollectionPhoto.id },
         });
-        return { added: false, message: '사진이 컬렉션에서 제거되었습니다.' };
+        return { added: false, message: getSuccessMessage("COLLECTION.PHOTO_REMOVED", lang) };
     } else {
         // 컬렉션에 없으면 추가
         await prisma.collectionPhoto.create({
@@ -63,7 +64,7 @@ export const togglePhotoInDefaultCollection = async (userId: number, photoId: nu
                 photoId: photoId,
             },
         });
-        return { added: true, message: '사진이 컬렉션에 추가되었습니다.' };
+        return { added: true, message: getSuccessMessage("COLLECTION.PHOTO_ADDED", lang) };
     }
 };
 
@@ -106,12 +107,12 @@ export const getDefaultCollectionPhotos = async (userId: number, currentUserId?:
     const authorIds = Array.from(new Set(collectionPhotos.map(cp => cp.photo.author?.id).filter(id => id !== undefined)));
     const followStatuses = currentUserId
         ? await prisma.follow.findMany({
-              where: {
-                  followerId: currentUserId,
-                  followingId: { in: authorIds },
-              },
-              select: { followingId: true },
-          })
+            where: {
+                followerId: currentUserId,
+                followingId: { in: authorIds },
+            },
+            select: { followingId: true },
+        })
         : [];
 
     const followedAuthorIds = new Set(followStatuses.map(f => f.followingId));
@@ -129,7 +130,7 @@ export const getDefaultCollectionPhotos = async (userId: number, currentUserId?:
                 author: authorWithFollowStatus,
             },
         };
-    }));
+    });
 
     return photosWithFollowStatus;
 };
@@ -226,12 +227,12 @@ export const getCollectionDetails = async (collectionId: number, currentUserId?:
 
     const followStatuses = currentUserId
         ? await prisma.follow.findMany({
-              where: {
-                  followerId: currentUserId,
-                  followingId: { in: Array.from(authorIds) },
-              },
-              select: { followingId: true },
-          })
+            where: {
+                followerId: currentUserId,
+                followingId: { in: Array.from(authorIds) },
+            },
+            select: { followingId: true },
+        })
         : [];
 
     const followStatusMap = new Map<number, boolean>();
@@ -261,7 +262,7 @@ export const getCollectionDetails = async (collectionId: number, currentUserId?:
                 author: photoAuthorWithFollowStatus,
             },
         };
-    }));
+    });
 
     return { ...collection, owner: ownerWithFollowStatus, photos: photosWithFollowStatus };
 };

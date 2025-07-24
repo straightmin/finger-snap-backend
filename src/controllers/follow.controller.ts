@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import * as followService from '../services/follow.service';
+import { getErrorMessage } from "../utils/messageMapper";
 
 /**
  * 팔로우/언팔로우 토글 컨트롤러 함수
@@ -12,10 +13,10 @@ export const toggleFollow = asyncHandler(async (req: Request, res: Response) => 
     const followingId = Number(req.params.id);
 
     if (!followerId) {
-        return res.status(401).json({ message: 'Unauthorized' });
+        return res.status(401).json({ message: getErrorMessage("GLOBAL.UNAUTHORIZED", req.lang) });
     }
 
-    const result = await followService.toggleFollow(followerId, followingId);
+    const result = await followService.toggleFollow(followerId, followingId, req.lang || 'ko');
     res.status(200).json(result);
 });
 
@@ -51,7 +52,7 @@ export const isFollowing = asyncHandler(async (req: Request, res: Response) => {
     const followingId = Number(req.params.id);
 
     if (!followerId) {
-        return res.status(401).json({ message: 'Unauthorized' });
+        return res.status(401).json({ message: getErrorMessage("GLOBAL.UNAUTHORIZED", req.lang) });
     }
 
     const isFollowingStatus = await followService.isFollowing(followerId, followingId);

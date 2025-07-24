@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import * as photoService from '../services/photo.service';
 import { asyncHandler } from '../utils/asyncHandler';
+import { getErrorMessage, getSuccessMessage } from "../utils/messageMapper";
 
 export const getPhotos = asyncHandler(async (req: Request, res: Response) => {
     const sortBy = req.query.sortBy as string;
@@ -27,13 +28,13 @@ export const getPhotoById = asyncHandler(async (req: Request, res: Response) => 
     const currentUserId = req.user?.id;
 
     if (isNaN(photoId)) {
-        return res.status(400).json({ message: 'Invalid photo ID' });
+        return res.status(400).json({ message: getErrorMessage("PHOTO.INVALID_ID", req.lang) });
     }
 
     const photo = await photoService.getPhotoById(photoId, currentUserId);
 
     if (!photo) {
-        res.status(404).json({ message: 'PHOTO_NOT_FOUND' });
+        res.status(404).json({ message: getErrorMessage("PHOTO.NOT_FOUND", req.lang) });
         return;
     }
 
@@ -53,7 +54,7 @@ export const getPhotoById = asyncHandler(async (req: Request, res: Response) => 
  */
 export const uploadPhoto = asyncHandler(async (req: Request, res: Response) => {
     if (!req.file) {
-        res.status(400).json({ message: 'PHOTO_IS_REQUIRED' });
+        res.status(400).json({ message: getErrorMessage("PHOTO.REQUIRED", req.lang) });
         return;
     }
 
@@ -83,11 +84,11 @@ export const updatePhotoVisibility = asyncHandler(async (req: Request, res: Resp
     const userId = req.user!.id;
 
     if (typeof isPublic !== 'boolean') {
-        res.status(400).json({ message: 'IS_PUBLIC_FIELD_IS_REQUIRED_AND_MUST_BE_A_BOOLEAN' });
+        res.status(400).json({ message: getErrorMessage("PHOTO.IS_PUBLIC_REQUIRED", req.lang) });
         return;
     }
 
-    const updatedPhoto = await photoService.updatePhotoVisibility(photoId, userId, isPublic);
+    const updatedPhoto = await photoService.updatePhotoVisibility(photoId, userId, isPublic, req.lang || 'ko');
 
     res.status(200).json(updatedPhoto);
 });
@@ -102,9 +103,9 @@ export const deletePhoto = asyncHandler(async (req: Request, res: Response) => {
     const photoId = parseInt(req.params.id, 10);
     const userId = req.user!.id;
 
-    await photoService.deletePhoto(photoId, userId);
+    await photoService.deletePhoto(photoId, userId, req.lang || 'ko');
 
-    res.status(200).json({ message: 'PHOTO_DELETED_SUCCESSFULLY' });
+    res.status(200).json({ message: getSuccessMessage("PHOTO.DELETED", req.lang) });
 });
 
 /**
