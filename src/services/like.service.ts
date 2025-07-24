@@ -9,10 +9,12 @@ export type LikeTarget =
     | { photoId?: never; seriesId: number; commentId?: never }
     | { photoId?: never; seriesId?: never; commentId: number };
 
+type LikeWhereClause = { userId_photoId: { userId: number; photoId: number; } } | { userId_seriesId: { userId: number; seriesId: number; } } | { userId_commentId: { userId: number; commentId: number; } };
+
 export const toggleLike = async (userId: number, target: LikeTarget, lang: Language) => {
     const { photoId, seriesId, commentId } = target;
 
-    let likeWhere: { userId_photoId: { userId: number; photoId: number; } } | { userId_seriesId: { userId: number; seriesId: number; } } | { userId_commentId: { userId: number; commentId: number; } };
+    let likeWhere: LikeWhereClause;
     let targetOwnerId: number;
 
     if (photoId) {

@@ -92,8 +92,12 @@ export const getComments = async (userId: number | undefined, target: { photoId?
         orderBy: { createdAt: 'asc' },
     });
 
-    const commentMap = new Map<number, Comment & { replies: Comment[] }>();
-    const rootComments: (Comment & { replies: Comment[] })[] = [];
+    interface NestedComment extends Comment {
+    replies: NestedComment[];
+}
+
+    const commentMap = new Map<number, NestedComment>();
+    const rootComments: NestedComment[] = [];
 
     comments.forEach(comment => {
         commentMap.set(comment.id, { ...comment, replies: [] });
@@ -106,7 +110,7 @@ export const getComments = async (userId: number | undefined, target: { photoId?
                 parent.replies.push(commentMap.get(comment.id)!);
             }
         } else {
-            rootComments.push(commentMap.get(comment.id) as Comment & { replies: Comment[] });
+            rootComments.push(commentMap.get(comment.id)!);
         }
     });
 
