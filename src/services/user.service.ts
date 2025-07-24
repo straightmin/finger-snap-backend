@@ -14,6 +14,13 @@ type UserProfileWithFollowStatus = {
     isFollowed: boolean;
 };
 
+/**
+ * 사용자 프로필 정보를 조회합니다.
+ * @param userId 조회할 사용자 ID
+ * @param currentUserId 현재 로그인된 사용자 ID
+ * @param lang 언어 설정
+ * @returns 팔로우 상태가 포함된 사용자 프로필
+ */
 export const getUserProfile = async (userId: number, currentUserId?: number, lang?: Language): Promise<UserProfileWithFollowStatus> => {
     const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -46,6 +53,12 @@ export const getUserProfile = async (userId: number, currentUserId?: number, lan
     };
 };
 
+/**
+ * 사용자 프로필 정보를 업데이트합니다.
+ * @param userId 사용자 ID
+ * @param profileData 업데이트할 프로필 데이터
+ * @returns 업데이트된 사용자 프로필
+ */
 export const updateUserProfile = async (
     userId: number,
     profileData: {

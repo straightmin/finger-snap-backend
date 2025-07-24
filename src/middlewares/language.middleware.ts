@@ -6,6 +6,12 @@ declare module 'express' {
     }
 }
 
+/**
+ * Accept-Language 헤더를 기반으로 언어를 설정하는 미들웨어입니다.
+ * @param req HTTP 요청 객체
+ * @param res HTTP 응답 객체
+ * @param next 다음 미들웨어로 제어를 전달하는 함수
+ */
 export const setLanguage = (req: Request, res: Response, next: NextFunction) => {
     const acceptLanguage = req.headers["accept-language"];
     if (acceptLanguage) {

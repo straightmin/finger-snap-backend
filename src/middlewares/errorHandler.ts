@@ -4,6 +4,13 @@ interface CustomError extends Error {
     statusCode?: number;
 }
 
+/**
+ * 전역 에러 처리 미들웨어입니다.
+ * @param err 발생한 에러 객체
+ * @param req HTTP 요청 객체
+ * @param res HTTP 응답 객체
+ * @param _next 다음 미들웨어 함수 (사용되지 않음)
+ */
 export const errorHandler = (
     err: CustomError,
     req: Request,

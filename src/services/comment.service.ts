@@ -4,8 +4,14 @@ import * as notificationService from './notification.service';
 
 const prisma = new PrismaClient();
 
-// Helper function to check access rights for a resource (photo or series)
-// 리소스(사진 또는 시리즈)에 대한 접근 권한을 확인하는 헬퍼 함수
+/**
+ * 리소스(사진 또는 시리즈)에 대한 접근 권한을 확인합니다.
+ * @param userId 사용자 ID
+ * @param photoId 사진 ID (선택 사항)
+ * @param seriesId 시리즈 ID (선택 사항)
+ * @param lang 언어 설정
+ * @returns 리소스 소유자 정보
+ */
 const checkAccess = async (userId: number | undefined, photoId?: number, seriesId?: number, lang?: Language) => {
     if (photoId) {
         const photo = await prisma.photo.findUnique({ where: { id: photoId } });
@@ -30,6 +36,12 @@ interface CreateCommentData {
     seriesId?: number;
 }
 
+/**
+ * 새로운 댓글을 생성합니다.
+ * @param data 댓글 생성 데이터
+ * @param lang 언어 설정
+ * @returns 생성된 댓글 객체
+ */
 export const createComment = async (data: CreateCommentData, lang: Language) => {
     const { userId, content, parentId, photoId, seriesId } = data;
 
@@ -75,6 +87,13 @@ export const createComment = async (data: CreateCommentData, lang: Language) => 
     return newComment;
 };
 
+/**
+ * 사진 또는 시리즈의 댓글 목록을 조회합니다.
+ * @param userId 사용자 ID
+ * @param target 대상 리소스 (photoId 또는 seriesId)
+ * @param lang 언어 설정
+ * @returns 중첩된 댓글 목록
+ */
 export const getComments = async (userId: number | undefined, target: { photoId?: number; seriesId?: number }, lang?: Language) => {
     const { photoId, seriesId } = target;
     // If user is not logged in, they can only see public content. If logged in, they can see their own private content.
@@ -117,6 +136,13 @@ export const getComments = async (userId: number | undefined, target: { photoId?
     return rootComments;
 };
 
+/**
+ * 댓글을 삭제합니다.
+ * @param commentId 댓글 ID
+ * @param userId 사용자 ID
+ * @param lang 언어 설정
+ * @returns 삭제된 댓글 객체
+ */
 export const deleteComment = async (commentId: number, userId: number, lang: Language) => {
     const comment = await prisma.comment.findUnique({
         where: { id: commentId },

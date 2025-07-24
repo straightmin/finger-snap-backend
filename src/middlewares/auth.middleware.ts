@@ -19,7 +19,12 @@ declare module 'express' {
     }
 }
 
-// JWT 검증 미들웨어
+/**
+ * JWT 토큰을 검증하고 사용자 정보를 Request 객체에 추가하는 미들웨어입니다.
+ * @param req HTTP 요청 객체
+ * @param res HTTP 응답 객체
+ * @param next 다음 미들웨어로 제어를 전달하는 함수
+ */
 export const authenticateToken: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
     // 1. Authorization 헤더에서 토큰 추출
     // 헤더 형식: Bearer <token>

@@ -4,9 +4,10 @@ import * as followService from '../services/follow.service';
 import { getErrorMessage } from "../utils/messageMapper";
 
 /**
- * 팔로우/언팔로우 토글 컨트롤러 함수
- * @param req Express의 Request 객체. `req.params.id`로 토글할 사용자의 ID를 받습니다.
- * @param res Express의 Response 객체. 작업 결과를 반환합니다.
+ * 팔로우/언팔로우를 토글합니다.
+ * @param req HTTP 요청 객체 (팔로우할 사용자 ID 포함)
+ * @param res HTTP 응답 객체
+ * @returns 팔로우/언팔로우 결과
  */
 export const toggleFollow = asyncHandler(async (req: Request, res: Response) => {
     const followerId = req.user?.id;
@@ -21,9 +22,10 @@ export const toggleFollow = asyncHandler(async (req: Request, res: Response) => 
 });
 
 /**
- * 팔로워 목록을 조회하는 컨트롤러 함수
- * @param req Express의 Request 객체. `req.params.id`로 사용자의 ID를 받습니다.
- * @param res Express의 Response 객체. 팔로워 목록을 반환합니다.
+ * 팔로워 목록을 조회합니다.
+ * @param req HTTP 요청 객체 (사용자 ID 포함)
+ * @param res HTTP 응답 객체
+ * @returns 팔로워 목록
  */
 export const getFollowers = asyncHandler(async (req: Request, res: Response) => {
     const userId = Number(req.params.id);
@@ -32,9 +34,10 @@ export const getFollowers = asyncHandler(async (req: Request, res: Response) => 
 });
 
 /**
- * 팔로잉 목록을 조회하는 컨트롤러 함수
- * @param req Express의 Request 객체. `req.params.id`로 사용자의 ID를 받습니다.
- * @param res Express의 Response 객체. 팔로잉 목록을 반환합니다.
+ * 팔로잉 목록을 조회합니다.
+ * @param req HTTP 요청 객체 (사용자 ID 포함)
+ * @param res HTTP 응답 객체
+ * @returns 팔로잉 목록
  */
 export const getFollowing = asyncHandler(async (req: Request, res: Response) => {
     const userId = Number(req.params.id);
@@ -43,9 +46,10 @@ export const getFollowing = asyncHandler(async (req: Request, res: Response) => 
 });
 
 /**
- * 특정 사용자가 다른 사용자를 팔로우하고 있는지 확인하는 컨트롤러 함수
- * @param req Express의 Request 객체. `req.params.id`로 팔로우 상태를 확인할 사용자의 ID를 받습니다.
- * @param res Express의 Response 객체. 팔로우 상태를 반환합니다.
+ * 특정 사용자를 팔로우하고 있는지 확인합니다.
+ * @param req HTTP 요청 객체 (팔로우 상태를 확인할 사용자 ID 포함)
+ * @param res HTTP 응답 객체
+ * @returns 팔로우 상태 정보
  */
 export const isFollowing = asyncHandler(async (req: Request, res: Response) => {
     const followerId = req.user?.id;

@@ -5,8 +5,10 @@ import * as seriesService from '../services/series.service';
 import { getErrorMessage, getSuccessMessage } from "../utils/messageMapper";
 
 /**
- * 새 시리즈를 생성하는 컨트롤러 함수
- * POST /api/series
+ * 새 시리즈를 생성합니다.
+ * @param req HTTP 요청 객체 (title, description, coverPhotoId, isPublic 포함)
+ * @param res HTTP 응답 객체
+ * @returns 생성된 시리즈 객체
  */
 export const createSeries = asyncHandler(async (req: Request, res: Response) => {
     const { title, description, coverPhotoId, isPublic } = req.body;
@@ -22,8 +24,10 @@ export const createSeries = asyncHandler(async (req: Request, res: Response) => 
 });
 
 /**
- * 특정 시리즈의 상세 정보를 조회하는 컨트롤러 함수
- * GET /api/series/:id
+ * 특정 시리즈의 상세 정보를 조회합니다.
+ * @param req HTTP 요청 객체 (시리즈 ID 포함)
+ * @param res HTTP 응답 객체
+ * @returns 시리즈 상세 정보
  */
 export const getSeriesById = asyncHandler(async (req: Request, res: Response) => {
     const seriesId = parseInt(req.params.id, 10);
@@ -45,8 +49,10 @@ export const getSeriesById = asyncHandler(async (req: Request, res: Response) =>
 });
 
 /**
- * 현재 로그인된 사용자의 모든 시리즈 목록을 조회하는 컨트롤러 함수
- * GET /api/series/me
+ * 현재 로그인된 사용자의 모든 시리즈 목록을 조회합니다.
+ * @param req HTTP 요청 객체 (인증된 사용자 정보 포함)
+ * @param res HTTP 응답 객체
+ * @returns 사용자의 시리즈 목록
  */
 export const getMySeries = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
@@ -55,8 +61,10 @@ export const getMySeries = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * 시리즈 정보를 수정하는 컨트롤러 함수
- * PUT /api/series/:id
+ * 시리즈 정보를 수정합니다.
+ * @param req HTTP 요청 객체 (시리즈 ID, title, description, coverPhotoId, isPublic 포함)
+ * @param res HTTP 응답 객체
+ * @returns 수정된 시리즈 객체
  */
 export const updateSeries = asyncHandler(async (req: Request, res: Response) => {
     const seriesId = parseInt(req.params.id, 10);
@@ -85,8 +93,9 @@ export const updateSeries = asyncHandler(async (req: Request, res: Response) => 
 });
 
 /**
- * 시리즈를 삭제하는 컨트롤러 함수
- * DELETE /api/series/:id
+ * 시리즈를 삭제합니다.
+ * @param req HTTP 요청 객체 (시리즈 ID 포함)
+ * @param res HTTP 응답 객체
  */
 export const deleteSeries = asyncHandler(async (req: Request, res: Response) => {
     const seriesId = parseInt(req.params.id, 10);
@@ -114,8 +123,10 @@ export const deleteSeries = asyncHandler(async (req: Request, res: Response) => 
 });
 
 /**
- * 시리즈에 사진을 추가하는 컨트롤러 함수
- * POST /api/series/:seriesId/photos/:photoId
+ * 시리즈에 사진을 추가합니다.
+ * @param req HTTP 요청 객체 (시리즈 ID, 사진 ID 포함)
+ * @param res HTTP 응답 객체
+ * @returns 추가된 사진 정보
  */
 export const addPhotoToSeries = asyncHandler(async (req: Request, res: Response) => {
     const { seriesId, photoId } = req.params;
@@ -146,8 +157,9 @@ export const addPhotoToSeries = asyncHandler(async (req: Request, res: Response)
 });
 
 /**
- * 시리즈에서 사진을 제거하는 컨트롤러 함수
- * DELETE /api/series/:seriesId/photos/:photoId
+ * 시리즈에서 사진을 제거합니다.
+ * @param req HTTP 요청 객체 (시리즈 ID, 사진 ID 포함)
+ * @param res HTTP 응답 객체
  */
 export const removePhotoFromSeries = asyncHandler(async (req: Request, res: Response) => {
     const { seriesId, photoId } = req.params;
@@ -182,8 +194,10 @@ export const removePhotoFromSeries = asyncHandler(async (req: Request, res: Resp
 });
 
 /**
- * 시리즈 내 사진들의 순서를 업데이트하는 컨트롤러 함수
- * PUT /api/series/:seriesId/photos/order
+ * 시리즈 내 사진들의 순서를 업데이트합니다.
+ * @param req HTTP 요청 객체 (시리즈 ID, photoOrders 배열 포함)
+ * @param res HTTP 응답 객체
+ * @returns 순서 업데이트 성공 메시지
  */
 export const updateSeriesPhotoOrder = asyncHandler(async (req: Request, res: Response) => {
     const seriesId = parseInt(req.params.seriesId, 10);

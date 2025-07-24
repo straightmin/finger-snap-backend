@@ -4,6 +4,12 @@ import { Request } from 'express';
 // 허용할 파일 MIME 타입 정의
 const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
+/**
+ * 업로드된 파일의 타입을 검증하는 필터 함수입니다.
+ * @param req HTTP 요청 객체
+ * @param file 업로드된 파일 객체
+ * @param cb 콜백 함수
+ */
 const fileFilter = (
     req: Request,
     file: Express.Multer.File,

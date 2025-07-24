@@ -15,7 +15,12 @@ const healthCheck = {
     timestamp: new Date().toISOString(),
 };
 
-// register api
+/**
+ * 새로운 사용자를 등록합니다.
+ * @param req HTTP 요청 객체 (username, email, password 포함)
+ * @param res HTTP 응답 객체
+ * @returns 등록 성공 메시지
+ */
 export const register = asyncHandler(async (req: Request, res: Response) => {
     const { username, email, password } = req.body;
 
@@ -61,7 +66,12 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     res.status(201).json({ message: getSuccessMessage("AUTH.REGISTER", req.lang) });
 });
 
-// login api
+/**
+ * 사용자를 인증하고 JWT 토큰을 발급합니다.
+ * @param req HTTP 요청 객체 (email, password 포함)
+ * @param res HTTP 응답 객체
+ * @returns 로그인 성공 메시지와 JWT 토큰
+ */
 export const login = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
@@ -108,7 +118,12 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     });
 });
 
-// get my info api
+/**
+ * 현재 인증된 사용자의 정보를 반환합니다.
+ * @param req HTTP 요청 객체 (인증된 사용자 정보 포함)
+ * @param res HTTP 응답 객체
+ * @returns 현재 사용자 정보
+ */
 export const me = async (req: Request, res: Response) => {
     // authenticateToken 미들웨어에서 req.user에 사용자 정보가 추가됩니다.
     // 따라서 req.user가 존재하는지 확인하고 반환합니다.
@@ -121,14 +136,33 @@ export const me = async (req: Request, res: Response) => {
         });
     }
 };
+
+/**
+ * 서버 연결 상태를 확인합니다.
+ * @param req HTTP 요청 객체
+ * @param res HTTP 응답 객체
+ * @returns ping 응답 메시지
+ */
 export const ping = async (req: Request, res: Response) => {
     res.status(200).json({ message: getMessage("INFO.GLOBAL.PONG", req.lang) });
 };
+
+/**
+ * 서버 헬스 체크를 수행합니다.
+ * @param req HTTP 요청 객체
+ * @param res HTTP 응답 객체
+ * @returns 서버 상태 정보
+ */
 export const health = async (req: Request, res: Response) => {
     res.status(200).json(healthCheck);
 };
 
-// logout api
+/**
+ * 사용자를 로그아웃합니다.
+ * @param req HTTP 요청 객체
+ * @param res HTTP 응답 객체
+ * @returns 로그아웃 성공 메시지
+ */
 export const logout = async (req: Request, res: Response) => {
     // JWT는 서버에 세션을 저장하지 않으므로, 서버 측에서 특별히 할 일은 없습니다.
     // 클라이언트에게 토큰을 삭제하도록 지시하는 메시지를 보냅니다.

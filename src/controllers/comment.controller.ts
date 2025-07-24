@@ -3,6 +3,12 @@ import * as commentService from '../services/comment.service';
 import { asyncHandler } from '../utils/asyncHandler';
 import { getErrorMessage, getSuccessMessage } from "../utils/messageMapper";
 
+/**
+ * 새로운 댓글을 생성합니다.
+ * @param req HTTP 요청 객체 (content, parentId, photoId, seriesId 포함)
+ * @param res HTTP 응답 객체
+ * @returns 생성된 댓글 객체
+ */
 export const createComment = asyncHandler(async (req: Request, res: Response) => {
     const { photoId, seriesId } = req.params;
     const { content, parentId } = req.body;
@@ -23,6 +29,12 @@ export const createComment = asyncHandler(async (req: Request, res: Response) =>
     res.status(201).json(newComment);
 });
 
+/**
+ * 사진 또는 시리즈의 댓글 목록을 조회합니다.
+ * @param req HTTP 요청 객체 (photoId 또는 seriesId 포함)
+ * @param res HTTP 응답 객체
+ * @returns 댓글 목록
+ */
 export const getComments = asyncHandler(async (req: Request, res: Response) => {
     const { photoId, seriesId } = req.params;
     // 유저가 로그인하지 않은 경우, 공개된 콘텐츠만 볼 수 있습니다. 로그인한 경우 자신의 비공개 콘텐츠도 볼 수 있습니다.
@@ -40,6 +52,12 @@ export const getComments = asyncHandler(async (req: Request, res: Response) => {
     res.status(200).json(comments);
 });
 
+/**
+ * 댓글을 삭제합니다.
+ * @param req HTTP 요청 객체 (댓글 ID 포함)
+ * @param res HTTP 응답 객체
+ * @returns 댓글 삭제 성공 메시지
+ */
 export const deleteComment = asyncHandler(async (req: Request, res: Response) => {
     const commentId = parseInt(req.params.commentId, 10);
     const userId = req.user!.id;

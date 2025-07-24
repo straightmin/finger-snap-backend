@@ -4,6 +4,12 @@ import { LikeTarget } from '../services/like.service';
 import { getErrorMessage } from "../utils/messageMapper";
 import { asyncHandler } from '../utils/asyncHandler';
 
+/**
+ * 사진, 시리즈, 또는 댓글에 대한 좋아요를 토글합니다.
+ * @param req HTTP 요청 객체 (photoId, seriesId, commentId 중 하나 포함)
+ * @param res HTTP 응답 객체
+ * @returns 좋아요 토글 결과
+ */
 export const toggleLike = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user?.id;
     const { photoId, seriesId, commentId } = req.body;

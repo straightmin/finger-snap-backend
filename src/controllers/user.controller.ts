@@ -5,6 +5,12 @@ import * as userService from '../services/user.service';
 import * as photoService from '../services/photo.service';
 import { getSuccessMessage } from "../utils/messageMapper";
 
+/**
+ * 현재 사용자의 프로필 정보를 조회합니다.
+ * @param req HTTP 요청 객체 (인증된 사용자 정보 포함)
+ * @param res HTTP 응답 객체
+ * @returns 사용자 프로필 정보
+ */
 export const getMyProfile = asyncHandler(async (req: Request, res: Response) => {
 
     const userId = req.user!.id;
@@ -12,6 +18,12 @@ export const getMyProfile = asyncHandler(async (req: Request, res: Response) => 
     res.status(200).json(profile);
 });
 
+/**
+ * 현재 사용자의 프로필 정보를 업데이트합니다.
+ * @param req HTTP 요청 객체 (username, bio, profileImageUrl 포함)
+ * @param res HTTP 응답 객체
+ * @returns 업데이트된 프로필 정보
+ */
 export const updateMyProfile = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
     const { username, bio, profileImageUrl } = req.body;
@@ -25,6 +37,12 @@ export const updateMyProfile = asyncHandler(async (req: Request, res: Response) 
     res.status(200).json(updatedProfile);
 });
 
+/**
+ * 현재 사용자가 업로드한 사진 목록을 조회합니다.
+ * @param req HTTP 요청 객체 (인증된 사용자 정보 포함)
+ * @param res HTTP 응답 객체
+ * @returns 사용자의 사진 목록
+ */
 export const getMyPhotos = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
     const photos = await userService.getUserPhotos(userId);
@@ -35,6 +53,12 @@ export const getMyPhotos = asyncHandler(async (req: Request, res: Response) => {
     res.status(200).json(photosWithLikeCount);
 });
 
+/**
+ * 현재 사용자가 좋아요를 누른 사진 목록을 조회합니다.
+ * @param req HTTP 요청 객체 (인증된 사용자 정보 포함)
+ * @param res HTTP 응답 객체
+ * @returns 좋아요한 사진 목록
+ */
 export const getMyLikedPhotos = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
     const likedPhotos = await photoService.getLikedPhotos(userId);
@@ -45,6 +69,12 @@ export const getMyLikedPhotos = asyncHandler(async (req: Request, res: Response)
     res.status(200).json(photos);
 });
 
+/**
+ * 현재 사용자의 계정을 삭제합니다.
+ * @param req HTTP 요청 객체 (인증된 사용자 정보 포함)
+ * @param res HTTP 응답 객체
+ * @returns 계정 삭제 성공 메시지
+ */
 export const deleteMyAccount = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
     await userService.deleteUser(userId, req.lang);

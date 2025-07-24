@@ -13,6 +13,11 @@ interface NotificationData {
     followId?: number;
 }
 
+/**
+ * 새로운 알림을 생성합니다.
+ * @param data 알림 데이터
+ * @returns 생성된 알림 객체 또는 undefined (중복/자기 알림의 경우)
+ */
 export const createNotification = async (data: NotificationData) => {
     if (data.userId === data.actorId) {
         return;
@@ -42,6 +47,13 @@ export const createNotification = async (data: NotificationData) => {
     });
 };
 
+/**
+ * 사용자의 알림 목록을 조회합니다.
+ * @param userId 사용자 ID
+ * @param page 페이지 번호
+ * @param limit 페이지당 알림 수
+ * @returns 알림 목록
+ */
 export const getNotifications = async (userId: number, page: number, limit: number) => {
     const skip = (page - 1) * limit;
     return prisma.notification.findMany({
@@ -57,6 +69,12 @@ export const getNotifications = async (userId: number, page: number, limit: numb
     });
 };
 
+/**
+ * 알림을 읽음 상태로 표시합니다.
+ * @param userId 사용자 ID
+ * @param notificationIds 읽음 표시할 알림 ID 배열
+ * @returns 업데이트 결과
+ */
 export const markAsRead = async (userId: number, notificationIds: number[]) => {
     return prisma.notification.updateMany({
         where: {

@@ -11,6 +11,13 @@ export type LikeTarget =
 
 type LikeWhereClause = { userId_photoId: { userId: number; photoId: number; } } | { userId_seriesId: { userId: number; seriesId: number; } } | { userId_commentId: { userId: number; commentId: number; } };
 
+/**
+ * 사진, 시리즈, 또는 댓글에 대한 좋아요를 토글합니다.
+ * @param userId 사용자 ID
+ * @param target 좋아요 대상 (사진, 시리즈, 또는 댓글 ID)
+ * @param lang 언어 설정
+ * @returns 좋아요 토글 결과
+ */
 export const toggleLike = async (userId: number, target: LikeTarget, lang: Language) => {
     const { photoId, seriesId, commentId } = target;
 

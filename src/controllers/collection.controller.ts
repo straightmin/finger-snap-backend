@@ -5,8 +5,10 @@ import * as collectionService from '../services/collection.service';
 import { getErrorMessage } from "../utils/messageMapper";
 
 /**
- * 사진을 기본 컬렉션에 추가하거나 제거하는 컨트롤러 함수
- * POST /api/photos/:id/collection
+ * 사진을 기본 컬렉션에 추가하거나 제거합니다.
+ * @param req HTTP 요청 객체 (사진 ID 포함)
+ * @param res HTTP 응답 객체
+ * @returns 컬렉션 추가/제거 결과
  */
 export const toggleCollection = asyncHandler(async (req: Request, res: Response) => {
     const photoId = parseInt(req.params.id, 10);
@@ -22,8 +24,10 @@ export const toggleCollection = asyncHandler(async (req: Request, res: Response)
 });
 
 /**
- * 사용자의 기본 컬렉션에 있는 사진 목록을 조회하는 컨트롤러 함수
- * GET /api/users/me/collections
+ * 사용자의 기본 컬렉션에 있는 사진 목록을 조회합니다.
+ * @param req HTTP 요청 객체 (인증된 사용자 정보 포함)
+ * @param res HTTP 응답 객체
+ * @returns 컬렉션에 담긴 사진 목록
  */
 export const getMyCollections = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
@@ -39,8 +43,10 @@ export const getMyCollections = asyncHandler(async (req: Request, res: Response)
 });
 
 /**
- * 새로운 컬렉션을 생성하는 컨트롤러 함수
- * POST /api/collections
+ * 새로운 컬렉션을 생성합니다.
+ * @param req HTTP 요청 객체 (title, description 포함)
+ * @param res HTTP 응답 객체
+ * @returns 생성된 컬렉션 객체
  */
 export const createCollection = asyncHandler(async (req: Request, res: Response) => {
     const { title, description } = req.body;
@@ -56,8 +62,10 @@ export const createCollection = asyncHandler(async (req: Request, res: Response)
 });
 
 /**
- * 현재 로그인된 사용자의 모든 컬렉션 목록을 조회하는 컨트롤러 함수
- * GET /api/collections
+ * 현재 로그인된 사용자의 모든 컬렉션 목록을 조회합니다.
+ * @param req HTTP 요청 객체 (인증된 사용자 정보 포함)
+ * @param res HTTP 응답 객체
+ * @returns 사용자의 모든 컬렉션 목록
  */
 export const getUserCollections = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
@@ -66,8 +74,10 @@ export const getUserCollections = asyncHandler(async (req: Request, res: Respons
 });
 
 /**
- * 특정 컬렉션의 상세 정보를 조회하는 컨트롤러 함수
- * GET /api/collections/:id
+ * 특정 컬렉션의 상세 정보를 조회합니다.
+ * @param req HTTP 요청 객체 (컬렉션 ID 포함)
+ * @param res HTTP 응답 객체
+ * @returns 컬렉션 상세 정보
  */
 export const getCollectionById = asyncHandler(async (req: Request, res: Response) => {
     const collectionId = parseInt(req.params.id, 10);
@@ -89,8 +99,10 @@ export const getCollectionById = asyncHandler(async (req: Request, res: Response
 });
 
 /**
- * 컬렉션 정보를 수정하는 컨트롤러 함수
- * PUT /api/collections/:id
+ * 컬렉션 정보를 수정합니다.
+ * @param req HTTP 요청 객체 (컬렉션 ID, title, description 포함)
+ * @param res HTTP 응답 객체
+ * @returns 수정된 컬렉션 객체
  */
 export const updateCollection = asyncHandler(async (req: Request, res: Response) => {
     const collectionId = parseInt(req.params.id, 10);
@@ -124,8 +136,9 @@ export const updateCollection = asyncHandler(async (req: Request, res: Response)
 });
 
 /**
- * 컬렉션을 삭제하는 컨트롤러 함수
- * DELETE /api/collections/:id
+ * 컬렉션을 삭제합니다.
+ * @param req HTTP 요청 객체 (컬렉션 ID 포함)
+ * @param res HTTP 응답 객체
  */
 export const deleteCollection = asyncHandler(async (req: Request, res: Response) => {
     const collectionId = parseInt(req.params.id, 10);
@@ -153,8 +166,10 @@ export const deleteCollection = asyncHandler(async (req: Request, res: Response)
 });
 
 /**
- * 컬렉션에 사진을 추가하는 컨트롤러 함수
- * POST /api/collections/:collectionId/photos/:photoId
+ * 컬렉션에 사진을 추가합니다.
+ * @param req HTTP 요청 객체 (컬렉션 ID, 사진 ID 포함)
+ * @param res HTTP 응답 객체
+ * @returns 추가된 사진 정보
  */
 export const addPhotoToCollection = asyncHandler(async (req: Request, res: Response) => {
     const { collectionId, photoId } = req.params;
@@ -191,8 +206,9 @@ export const addPhotoToCollection = asyncHandler(async (req: Request, res: Respo
 });
 
 /**
- * 컬렉션에서 사진을 제거하는 컨트롤러 함수
- * DELETE /api/collections/:collectionId/photos/:photoId
+ * 컬렉션에서 사진을 제거합니다.
+ * @param req HTTP 요청 객체 (컬렉션 ID, 사진 ID 포함)
+ * @param res HTTP 응답 객체
  */
 export const removePhotoFromCollection = asyncHandler(async (req: Request, res: Response) => {
     const { collectionId, photoId } = req.params;
