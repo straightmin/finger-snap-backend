@@ -28,7 +28,7 @@ export const validateSchema = (schema: Joi.ObjectSchema, property: 'body' | 'par
         const { error } = schema.validate(req[property], { abortEarly: false });
         
         if (error) {
-            const lang = req.lang as Language || 'ko';
+            const lang = (req.lang as Language) ?? 'ko';
             const validationErrors = error.details.map(detail => {
                 // Joi 에러를 i18n 키로 매핑
                 const i18nKey = mapJoiErrorToI18nKey(detail);
@@ -136,7 +136,9 @@ export const commonSchemas = {
         photoId: Joi.number().integer().positive().optional(),
         seriesId: Joi.number().integer().positive().optional(),
         parentId: Joi.number().integer().positive().optional()
-    }).or('photoId', 'seriesId'),
+    }).or('photoId', 'seriesId').messages({
+        'object.missing': 'At least one of "photoId" or "seriesId" must be provided.'
+    }),
     
     // 컬렉션 관련 스키마
     collectionCreate: Joi.object({
