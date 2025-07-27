@@ -12,6 +12,10 @@ type UserProfileWithFollowStatus = {
     bio: string | null;
     profileImageUrl: string | null;
     isFollowed: boolean;
+    notifyLikes?: boolean;
+    notifyComments?: boolean;
+    notifyFollows?: boolean;
+    notifySeries?: boolean;
 };
 
 /**
@@ -29,7 +33,11 @@ export const getUserProfile = async (userId: number, currentUserId?: number, lan
             username: true,
             email: true,
             bio: true,
-            profileImageUrl: true, // profileImageUrl 필드 추가
+            profileImageUrl: true,
+            notifyLikes: true,
+            notifyComments: true,
+            notifyFollows: true,
+            notifySeries: true,
         },
     });
 
@@ -42,8 +50,8 @@ export const getUserProfile = async (userId: number, currentUserId?: number, lan
         isFollowed = await isFollowing(currentUserId, userId);
     }
 
-    // 응답 데이터 구조 변경
-    return {
+    // 본인 프로필인 경우에만 알림 설정을 포함
+    const response: UserProfileWithFollowStatus = {
         id: user.id,
         username: user.username,
         email: user.email,
@@ -51,6 +59,15 @@ export const getUserProfile = async (userId: number, currentUserId?: number, lan
         profileImageUrl: user.profileImageUrl,
         isFollowed,
     };
+
+    if (currentUserId === userId) {
+        response.notifyLikes = user.notifyLikes;
+        response.notifyComments = user.notifyComments;
+        response.notifyFollows = user.notifyFollows;
+        response.notifySeries = user.notifySeries;
+    }
+
+    return response;
 };
 
 /**
@@ -63,9 +80,15 @@ export const updateUserProfile = async (
     userId: number,
     profileData: {
         username?: string;
-        email?: string; bio?: string; profileImageUrl?: string
+        email?: string; 
+        bio?: string; 
+        profileImageUrl?: string;
+        notifyLikes?: boolean;
+        notifyComments?: boolean;
+        notifyFollows?: boolean;
+        notifySeries?: boolean;
     }) => {
-    const { username, email, bio, profileImageUrl } = profileData;
+    const { username, email, bio, profileImageUrl, notifyLikes, notifyComments, notifyFollows, notifySeries } = profileData;
 
     const updatedUser = await prisma.user.update({
         where: { id: userId },
@@ -74,6 +97,10 @@ export const updateUserProfile = async (
             email,
             bio,
             profileImageUrl,
+            notifyLikes,
+            notifyComments,
+            notifyFollows,
+            notifySeries,
         },
         select: {
             id: true,
@@ -81,6 +108,10 @@ export const updateUserProfile = async (
             email: true,
             bio: true,
             profileImageUrl: true,
+            notifyLikes: true,
+            notifyComments: true,
+            notifyFollows: true,
+            notifySeries: true,
         },
     });
 

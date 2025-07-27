@@ -22,7 +22,8 @@ const formatMessage = (message: string, replacements?: { [key: string]: string |
     }
     let formattedMessage = message;
     for (const key in replacements) {
-        formattedMessage = formattedMessage.replaceAll(`{${key}}`, String(replacements[key]));
+        const regex = new RegExp(`\\{${key}\\}`, 'g');
+        formattedMessage = formattedMessage.replace(regex, String(replacements[key]));
     }
     return formattedMessage;
 };
