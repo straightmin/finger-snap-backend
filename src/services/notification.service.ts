@@ -16,11 +16,44 @@ interface NotificationData {
 /**
  * 새로운 알림을 생성합니다.
  * @param data 알림 데이터
- * @returns 생성된 알림 객체 또는 undefined (중복/자기 알림의 경우)
+ * @returns 생성된 알림 객체 또는 undefined (중복/자기 알림/사용자 설정에 의해 차단된 경우)
  */
 export const createNotification = async (data: NotificationData) => {
     if (data.userId === data.actorId) {
         return;
+    }
+
+    // 사용자의 알림 설정을 확인합니다.
+    const user = await prisma.user.findUnique({
+        where: { id: data.userId },
+        select: {
+            notifyLikes: true,
+            notifyComments: true,
+            notifyFollows: true,
+            notifySeries: true,
+        },
+    });
+
+    if (!user) {
+        return;
+    }
+
+    // 이벤트 타입에 따라 사용자 설정을 확인합니다.
+    switch (data.eventType) {
+        case 'NEW_LIKE':
+            if (!user.notifyLikes) return;
+            break;
+        case 'NEW_COMMENT':
+            if (!user.notifyComments) return;
+            break;
+        case 'NEW_FOLLOW':
+            if (!user.notifyFollows) return;
+            break;
+        case 'NEW_SERIES':
+            if (!user.notifySeries) return;
+            break;
+        default:
+            break;
     }
 
     // Avoid duplicate notifications for the same action

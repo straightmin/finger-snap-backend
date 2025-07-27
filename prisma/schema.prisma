@@ -15,6 +15,11 @@ model User {
   username              String           @map("username")
   bio                   String?          @map("bio")
   profileImageUrl       String?          @map("profile_image_url")
+  // 알림 설정
+  notifyLikes           Boolean          @default(true) @map("notify_likes")
+  notifyComments        Boolean          @default(true) @map("notify_comments")
+  notifyFollows         Boolean          @default(true) @map("notify_follows")
+  notifySeries          Boolean          @default(true) @map("notify_series")
   createdAt             DateTime         @default(now()) @map("created_at")
   updatedAt             DateTime         @updatedAt @map("updated_at")
   deletedAt             DateTime?        @map("deleted_at")
