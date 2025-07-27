@@ -68,7 +68,7 @@
     "SUCCESS.PHOTO.DELETED": "写真が正常に削除されました。",
     "SUCCESS.SERIES.PHOTO_ORDER_UPDATED": "写真の順序が正常に更新されました。",
     "SUCCESS.USER.ACCOUNT_DELETED": "アカウントが正常に削除されました。",
-    "SUCCESS.USER.NOTIFICATION_PREFERENCES_UPDATED": "通知設定が更新されました。",
+    "SUCCESS.NOTIFICATION_PREFERENCES_UPDATED": "通知設定が更新されました。",
     "INFO.COLLECTION.PHOTO_ADDED": "写真がコレクションに追加されました。",
     "INFO.COLLECTION.PHOTO_REMOVED": "写真がコレクションから削除されました。",
     "INFO.GLOBAL.PONG": "ポン",

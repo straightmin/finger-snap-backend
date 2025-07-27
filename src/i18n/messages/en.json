@@ -68,7 +68,7 @@
     "SUCCESS.PHOTO.DELETED": "Photo deleted successfully.",
     "SUCCESS.SERIES.PHOTO_ORDER_UPDATED": "Photo order updated successfully.",
     "SUCCESS.USER.ACCOUNT_DELETED": "Account deleted successfully.",
-    "SUCCESS.USER.NOTIFICATION_PREFERENCES_UPDATED": "Notification preferences updated.",
+    "SUCCESS.NOTIFICATION_PREFERENCES_UPDATED": "Notification preferences updated.",
     "INFO.COLLECTION.PHOTO_ADDED": "Photo added to collection.",
     "INFO.COLLECTION.PHOTO_REMOVED": "Photo removed from collection.",
     "INFO.GLOBAL.PONG": "pong",

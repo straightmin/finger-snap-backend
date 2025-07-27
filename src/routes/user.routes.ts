@@ -18,7 +18,7 @@ router.get('/me/profile', authenticateToken, getMyProfile);
 router.put('/me/profile', authenticateToken, validateSchema(commonSchemas.userProfileUpdate), updateMyProfile);
 router.get('/me/photos', authenticateToken, getMyPhotos);
 router.get('/me/likes', authenticateToken, getMyLikedPhotos);
-router.put('/me/notifications', authenticateToken, validateSchema(commonSchemas.userProfileUpdate), updateNotificationPreferences);
+router.put('/me/notifications', authenticateToken, validateSchema(commonSchemas.notificationSettings), updateNotificationPreferences);
 router.delete('/me', authenticateToken, deleteMyAccount);
 
 router.get('/me/collections', authenticateToken, getUserCollections);

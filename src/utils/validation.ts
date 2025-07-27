@@ -106,6 +106,13 @@ export const commonSchemas = {
         password: Joi.string().required()
     }),
     
+    notificationSettings: Joi.object({
+        notifyLikes: Joi.boolean().optional(),
+        notifyComments: Joi.boolean().optional(),
+        notifyFollows: Joi.boolean().optional(),
+        notifySeries: Joi.boolean().optional()
+    }),
+
     userProfileUpdate: Joi.object({
         username: Joi.string().min(2).max(50).optional(),
         bio: Joi.string().max(500).allow('').optional(),

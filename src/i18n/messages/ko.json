@@ -68,7 +68,7 @@
     "SUCCESS.PHOTO.DELETED": "사진이 성공적으로 삭제되었습니다.",
     "SUCCESS.SERIES.PHOTO_ORDER_UPDATED": "사진 순서가 성공적으로 업데이트되었습니다.",
     "SUCCESS.USER.ACCOUNT_DELETED": "계정이 성공적으로 삭제되었습니다.",
-    "SUCCESS.USER.NOTIFICATION_PREFERENCES_UPDATED": "알림 설정이 업데이트되었습니다.",
+    "SUCCESS.NOTIFICATION_PREFERENCES_UPDATED": "알림 설정이 업데이트되었습니다.",
     "INFO.COLLECTION.PHOTO_ADDED": "사진이 컬렉션에 추가되었습니다.",
     "INFO.COLLECTION.PHOTO_REMOVED": "사진이 컬렉션에서 제거되었습니다.",
     "INFO.GLOBAL.PONG": "퐁",

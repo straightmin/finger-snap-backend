@@ -91,7 +91,7 @@ export const updateNotificationPreferences = asyncHandler(async (req: Request, r
     });
 
     res.status(200).json({
-        message: getSuccessMessage("USER.NOTIFICATION_PREFERENCES_UPDATED", req.lang),
+        message: getSuccessMessage("NOTIFICATION_PREFERENCES_UPDATED", req.lang),
         notificationPreferences: {
             notifyLikes: updatedProfile.notifyLikes,
             notifyComments: updatedProfile.notifyComments,
