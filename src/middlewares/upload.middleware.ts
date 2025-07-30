@@ -26,7 +26,7 @@ const fileFilter = (
 const upload = multer({
     storage: multer.memoryStorage(), // 파일을 메모리에 버퍼로 저장
     fileFilter: fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
 });
 
 export default upload;
