@@ -12,40 +12,181 @@ import {
 import { authenticateToken } from '../middlewares/auth.middleware';
 import upload from '../middlewares/upload.middleware';
 
-// Express 라우터 인스턴스를 생성합니다.
 const router = Router();
 
-// GET /api/photos
-// 사진 목록을 조회하는 라우트입니다.
-// 쿼리 파라미터 `sortBy` 값에 따라 '최신순' 또는 '인기순'으로 정렬됩니다.
+/**
+ * @swagger
+ * tags:
+ *   name: Photos
+ *   description: Photo management and retrieval
+ */
+
+/**
+ * @swagger
+ * /photos:
+ *   get:
+ *     summary: Get a list of photos
+ *     tags: [Photos]
+ *     parameters:
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [latest, popular]
+ *         description: The sort order for the photos.
+ *     responses:
+ *       200:
+ *         description: A list of photos.
+ */
 router.get('/', getPhotos);
 
-// GET /api/photos/liked
-// 사용자가 좋아요를 누른 사진 목록을 조회하는 라우트입니다.
+/**
+ * @swagger
+ * /photos/liked:
+ *   get:
+ *     summary: Get photos liked by the current user
+ *     tags: [Photos]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of liked photos.
+ *       401:
+ *         description: Unauthorized.
+ */
 router.get('/liked', authenticateToken, getLikedPhotos);
 
-// GET /api/photos/:id
-// 특정 ID의 사진을 조회하는 라우트입니다.
+/**
+ * @swagger
+ * /photos/{id}:
+ *   get:
+ *     summary: Get a photo by ID
+ *     tags: [Photos]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Photo data.
+ *       404:
+ *         description: Photo not found.
+ */
 router.get('/:id', getPhotoById);
 
-// POST /api/photos
-// 사진을 업로드하는 라우트입니다.
-// 인증된 사용자만 접근할 수 있으며, 'photo'라는 이름의 필드로 파일을 받습니다.
+/**
+ * @swagger
+ * /photos:
+ *   post:
+ *     summary: Upload a new photo
+ *     tags: [Photos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               photo:
+ *                 type: string
+ *                 format: binary
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Photo uploaded successfully.
+ *       400:
+ *         description: No file uploaded.
+ *       401:
+ *         description: Unauthorized.
+ */
 router.post('/', authenticateToken, upload.single('photo'), uploadPhoto);
 
-// PATCH /api/photos/:id/visibility
-// 특정 ID의 사진 공개 상태를 변경하는 라우트입니다.
-// 인증된 사용자만 자신의 사진 상태를 변경할 수 있습니다.
+/**
+ * @swagger
+ * /photos/{id}/visibility:
+ *   patch:
+ *     summary: Update photo visibility
+ *     tags: [Photos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               isPublic:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Photo visibility updated.
+ *       401:
+ *         description: Unauthorized.
+ *       404:
+ *         description: Photo not found.
+ */
 router.patch('/:id/visibility', authenticateToken, updatePhotoVisibility);
 
-// DELETE /api/photos/:id
-// 특정 ID의 사진을 삭제하는 라우트입니다.
-// 인증된 사용자만 자신의 사진을 삭제할 수 있습니다.
+/**
+ * @swagger
+ * /photos/{id}:
+ *   delete:
+ *     summary: Delete a photo
+ *     tags: [Photos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Photo deleted successfully.
+ *       401:
+ *         description: Unauthorized.
+ *       404:
+ *         description: Photo not found.
+ */
 router.delete('/:id', authenticateToken, deletePhoto);
 
-// POST /api/photos/:photoId/toggle-collection
-// 특정 사진을 '기본 컬렉션'에 추가/제거하는 라우트입니다.
+/**
+ * @swagger
+ * /photos/{photoId}/toggle-collection:
+ *   post:
+ *     summary: Add or remove a photo from the default collection
+ *     tags: [Photos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: photoId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Toggled photo in collection successfully.
+ *       401:
+ *         description: Unauthorized.
+ *       404:
+ *         description: Photo not found.
+ */
 router.post('/:photoId/toggle-collection', authenticateToken, toggleCollection);
 
-// 설정된 라우터를 모듈 외부로 내보냅니다.
 export default router;

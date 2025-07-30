@@ -6,25 +6,195 @@ import { createCollection, getUserCollections, getCollectionById, updateCollecti
 
 const router = Router();
 
-// 새 컬렉션 생성 (POST /api/collections)
+/**
+ * @swagger
+ * tags:
+ *   name: Collections
+ *   description: Photo collection management
+ */
+
+/**
+ * @swagger
+ * /collections:
+ *   post:
+ *     summary: Create a new collection
+ *     tags: [Collections]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Collection created successfully.
+ *       401:
+ *         description: Unauthorized.
+ */
 router.post('/', authenticateToken, createCollection);
 
-// 내 모든 컬렉션 목록 조회 (GET /api/collections)
+/**
+ * @swagger
+ * /collections:
+ *   get:
+ *     summary: Get all collections for the current user
+ *     tags: [Collections]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of collections.
+ *       401:
+ *         description: Unauthorized.
+ */
 router.get('/', authenticateToken, getUserCollections);
 
-// 특정 컬렉션 상세 조회 (GET /api/collections/:id)
+/**
+ * @swagger
+ * /collections/{id}:
+ *   get:
+ *     summary: Get a collection by ID
+ *     tags: [Collections]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Collection data.
+ *       401:
+ *         description: Unauthorized.
+ *       404:
+ *         description: Collection not found.
+ */
 router.get('/:id', authenticateToken, getCollectionById);
 
-// 컬렉션 정보 수정 (PUT /api/collections/:id)
+/**
+ * @swagger
+ * /collections/{id}:
+ *   put:
+ *     summary: Update a collection
+ *     tags: [Collections]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Collection updated successfully.
+ *       401:
+ *         description: Unauthorized.
+ *       404:
+ *         description: Collection not found.
+ */
 router.put('/:id', authenticateToken, updateCollection);
 
-// 컬렉션 삭제 (DELETE /api/collections/:id)
+/**
+ * @swagger
+ * /collections/{id}:
+ *   delete:
+ *     summary: Delete a collection
+ *     tags: [Collections]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Collection deleted successfully.
+ *       401:
+ *         description: Unauthorized.
+ *       404:
+ *         description: Collection not found.
+ */
 router.delete('/:id', authenticateToken, deleteCollection);
 
-// 컬렉션에 사진 추가 (POST /api/collections/:collectionId/photos/:photoId)
+/**
+ * @swagger
+ * /collections/{collectionId}/photos/{photoId}:
+ *   post:
+ *     summary: Add a photo to a collection
+ *     tags: [Collections]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: collectionId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: photoId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Photo added to collection successfully.
+ *       401:
+ *         description: Unauthorized.
+ *       404:
+ *         description: Collection or photo not found.
+ */
 router.post('/:collectionId/photos/:photoId', authenticateToken, addPhotoToCollection);
 
-// 컬렉션에서 사진 제거 (DELETE /api/collections/:collectionId/photos/:photoId)
+/**
+ * @swagger
+ * /collections/{collectionId}/photos/{photoId}:
+ *   delete:
+ *     summary: Remove a photo from a collection
+ *     tags: [Collections]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: collectionId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: photoId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Photo removed from collection successfully.
+ *       401:
+ *         description: Unauthorized.
+ *       404:
+ *         description: Collection or photo not found.
+ */
 router.delete('/:collectionId/photos/:photoId', authenticateToken, removePhotoFromCollection);
 
 export default router;

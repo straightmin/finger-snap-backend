@@ -1,5 +1,7 @@
 // src/server.ts
 import express from "express";
+import swaggerUi from "swagger-ui-express";
+import { specs } from "./config/swagger"; // Swagger 설정 임포트
 import config from "./config"; // 중앙 설정 파일 임포트
 import authRoutes from "./routes/auth.routes";
 import photoRoutes from "./routes/photo.routes";
@@ -15,6 +17,11 @@ import { setLanguage } from "./middlewares/language.middleware";
 
 // Express 애플리케이션을 생성합니다.
 const app = express();
+
+// 개발 환경에서만 Swagger UI를 활성화합니다.
+if (process.env.NODE_ENV !== 'production') {
+    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
+}
 
 // JSON 요청 본문을 파싱하기 위한 미들웨어를 추가합니다.
 app.use(express.json());
