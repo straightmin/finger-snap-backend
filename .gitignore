@@ -75,7 +75,10 @@ test-results/
 docker-compose.override.yml
 
 # Claude
-CLAUDE.*
+/CLAUDE.*
 
 # Prisma
 src/generated/prisma
+
+# Documentation
+docs/
