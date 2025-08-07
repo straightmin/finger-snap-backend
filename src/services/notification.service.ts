@@ -56,7 +56,6 @@ export const createNotification = async (data: NotificationData) => {
             break;
     }
 
-    // Avoid duplicate notifications for the same action
     // 같은 액션에 대해 중복 알림을 방지합니다.
     const existingNotification = await prisma.notification.findFirst({
         where: {
