@@ -166,9 +166,25 @@ export const createPhoto = async (photoData: {
     const { width, height } = metadata;
 
     let resizedBuffer = file.buffer;
-    if (width && height && (width > 1920 || height > 1920)) {
-        const resizeOptions = width > height ? { width: 1920 } : { height: 1920 };
-        resizedBuffer = await image.resize(resizeOptions).toBuffer();
+    if (width && height) {
+        let resizeOptions: { width?: number; height?: number } = {};
+        
+        // 가로와 세로를 개별적으로 체크하여 적절한 리사이징 적용
+        if (width > 1920 && height > 1920) {
+            // 둘 다 1920을 초과하는 경우, 더 큰 쪽을 기준으로 비율 유지
+            resizeOptions = width > height ? { width: 1920 } : { height: 1920 };
+        } else if (width > 1920) {
+            // 가로만 1920을 초과하는 경우
+            resizeOptions = { width: 1920 };
+        } else if (height > 1920) {
+            // 세로만 1920을 초과하는 경우
+            resizeOptions = { height: 1920 };
+        }
+        
+        // 리사이징이 필요한 경우에만 처리
+        if (Object.keys(resizeOptions).length > 0) {
+            resizedBuffer = await image.resize(resizeOptions).toBuffer();
+        }
     }
 
     // 2. 썸네일 생성

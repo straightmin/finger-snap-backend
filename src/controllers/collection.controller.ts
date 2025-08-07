@@ -13,7 +13,7 @@ import { sendErrorResponse } from '../utils/response';
  * @returns 컬렉션 추가/제거 결과
  */
 export const toggleCollection = asyncHandler(async (req: Request, res: Response) => {
-    const photoId = validateId(req.params.id);
+    const photoId = validateId(req.params.photoId);
     const userId = req.user!.id;
 
     if (!photoId) {
@@ -222,8 +222,7 @@ export const removePhotoFromCollection = asyncHandler(async (req: Request, res: 
     const collection = await collectionService.getCollectionDetails(collectionIdNum);
 
     if (!collection) {
-        res.status(404).json({ message: 'Collection not found' });
-        return;
+        return sendErrorResponse(res, 404, 'COLLECTION.NOT_FOUND', req.lang);
     }
 
     if (collection.userId !== userId) {
