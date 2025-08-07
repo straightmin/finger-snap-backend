@@ -31,7 +31,7 @@ export const validateSchema = (schema: Joi.ObjectSchema, property: 'body' | 'par
             const lang = (req.lang as Language) ?? 'ko';
             const validationErrors = error.details.map(detail => {
                 // Joi 에러를 i18n 키로 매핑
-                const i18nKey = mapJoiErrorToI18nKey(detail);
+                const i18nKey = mapJoiErrorToI18nKeyMemo(detail);
                 return {
                     field: detail.path.join('.'),
                     message: getErrorMessage(i18nKey, lang),
@@ -106,7 +106,7 @@ const mapJoiErrorToI18nKeyMemo = (() => {
     };
 })();
 
-const mapJoiErrorToI18nKey = mapJoiErrorToI18nKeyMemo;
+
 
 /**
  * ID 유효성 검사 유틸리티 함수

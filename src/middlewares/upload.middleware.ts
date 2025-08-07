@@ -18,8 +18,7 @@ const fileFilter = (
     if (allowedMimeTypes.includes(file.mimetype)) {
         cb(null, true); // 허용
     } else {
-        // @ts-expect-error: Multer의 FileFilterCallback 타입 정의가 Error를 직접 받지 않아 발생. 런타임에는 문제 없음.
-        cb(new Error('지원하지 않는 파일 형식입니다.'), false); // 거부
+        cb(new Error('지원하지 않는 파일 형식입니다.') as any, false); // 거부
     }
 };
 
