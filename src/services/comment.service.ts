@@ -1,8 +1,9 @@
 import { getErrorMessage, Language } from '../utils/messageMapper';
-import { PrismaClient, Comment } from '@prisma/client';
+import { Comment } from '@prisma/client';
 import * as notificationService from './notification.service';
+import { getPrismaClient } from '../utils/prismaClient';
 
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 /**
  * 리소스(사진 또는 시리즈)에 대한 접근 권한을 확인합니다.
@@ -15,7 +16,7 @@ const prisma = new PrismaClient();
 const checkAccess = async (userId: number | undefined, photoId?: number, seriesId?: number, lang?: Language) => {
     if (photoId) {
         const photo = await prisma.photo.findUnique({ where: { id: photoId } });
-        if (!photo || photo.deletedAt) throw new Error(getErrorMessage("PHOTO.NOT_FOUND", lang));
+        if (!photo || photo.deletedAt) throw new Error(getErrorMessage('PHOTO.NOT_FOUND', lang));
         if (!photo.isPublic && photo.userId !== userId) throw new Error(getErrorMessage('PHOTO.IS_PRIVATE', lang));
         return { ownerId: photo.userId };
     } else if (seriesId) {

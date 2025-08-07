@@ -2,7 +2,9 @@
 import { Request, Response } from 'express';
 import * as photoService from '../services/photo.service';
 import { asyncHandler } from '../utils/asyncHandler';
-import { getErrorMessage, getSuccessMessage } from "../utils/messageMapper";
+import { getErrorMessage, getSuccessMessage } from '../utils/messageMapper';
+import { validateId } from '../utils/validation';
+import { sendErrorResponse, sendSuccessResponse } from '../utils/response';
 
 /**
  * 사진 목록을 조회합니다.
@@ -30,18 +32,17 @@ export const getPhotos = asyncHandler(async (req: Request, res: Response) => {
  * @returns 사진 상세 정보
  */
 export const getPhotoById = asyncHandler(async (req: Request, res: Response) => {
-    const photoId = parseInt(req.params.id, 10);
+    const photoId = validateId(req.params.id);
     const currentUserId = req.user?.id;
 
-    if (isNaN(photoId)) {
-        return res.status(400).json({ message: getErrorMessage("PHOTO.INVALID_ID", req.lang) });
+    if (!photoId) {
+        return sendErrorResponse(res, 400, 'PHOTO.INVALID_ID', req.lang);
     }
 
     const photo = await photoService.getPhotoById(photoId, currentUserId);
 
     if (!photo) {
-        res.status(404).json({ message: getErrorMessage("PHOTO.NOT_FOUND", req.lang) });
-        return;
+        return sendErrorResponse(res, 404, 'PHOTO.NOT_FOUND', req.lang);
     }
 
     const { _count, ...photoWithoutCount } = photo;
@@ -61,7 +62,7 @@ export const getPhotoById = asyncHandler(async (req: Request, res: Response) => 
  */
 export const uploadPhoto = asyncHandler(async (req: Request, res: Response) => {
     if (!req.file) {
-        res.status(400).json({ message: getErrorMessage("PHOTO.REQUIRED", req.lang) });
+        res.status(400).json({ message: getErrorMessage('PHOTO.REQUIRED', req.lang) });
         return;
     }
 
@@ -86,13 +87,16 @@ export const uploadPhoto = asyncHandler(async (req: Request, res: Response) => {
  * @returns 업데이트된 사진 정보
  */
 export const updatePhotoVisibility = asyncHandler(async (req: Request, res: Response) => {
-    const photoId = parseInt(req.params.id, 10);
+    const photoId = validateId(req.params.id);
     const { isPublic } = req.body;
     const userId = req.user!.id;
 
+    if (!photoId) {
+        return sendErrorResponse(res, 400, 'PHOTO.INVALID_ID', req.lang);
+    }
+
     if (typeof isPublic !== 'boolean') {
-        res.status(400).json({ message: getErrorMessage("PHOTO.IS_PUBLIC_REQUIRED", req.lang) });
-        return;
+        return sendErrorResponse(res, 400, 'PHOTO.IS_PUBLIC_REQUIRED', req.lang);
     }
 
     const updatedPhoto = await photoService.updatePhotoVisibility(photoId, userId, isPublic, req.lang || 'ko');
@@ -107,12 +111,16 @@ export const updatePhotoVisibility = asyncHandler(async (req: Request, res: Resp
  * @returns 삭제 성공 메시지
  */
 export const deletePhoto = asyncHandler(async (req: Request, res: Response) => {
-    const photoId = parseInt(req.params.id, 10);
+    const photoId = validateId(req.params.id);
     const userId = req.user!.id;
+
+    if (!photoId) {
+        return sendErrorResponse(res, 400, 'PHOTO.INVALID_ID', req.lang);
+    }
 
     await photoService.deletePhoto(photoId, userId, req.lang || 'ko');
 
-    res.status(200).json({ message: getSuccessMessage("PHOTO.DELETED", req.lang) });
+    return sendSuccessResponse(res, 200, 'PHOTO.DELETED', req.lang);
 });
 
 /**

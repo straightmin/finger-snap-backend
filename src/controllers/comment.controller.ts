@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import * as commentService from '../services/comment.service';
 import { asyncHandler } from '../utils/asyncHandler';
-import { getErrorMessage, getSuccessMessage } from "../utils/messageMapper";
+import { getErrorMessage, getSuccessMessage } from '../utils/messageMapper';
 
 /**
  * 새로운 댓글을 생성합니다.
@@ -15,7 +15,7 @@ export const createComment = asyncHandler(async (req: Request, res: Response) =>
     const userId = req.user!.id;
 
     if (!content || content.trim() === '') {
-        return res.status(400).json({ message: getErrorMessage("COMMENT.CONTENT_EMPTY", req.lang) });
+        return res.status(400).json({ message: getErrorMessage('COMMENT.CONTENT_EMPTY', req.lang) });
     }
 
     const newComment = await commentService.createComment({
@@ -46,7 +46,7 @@ export const getComments = asyncHandler(async (req: Request, res: Response) => {
     } else if (seriesId) {
         comments = await commentService.getComments(userId, { seriesId: parseInt(seriesId, 10) }, req.lang || 'ko');
     } else {
-        return res.status(400).json({ message: getErrorMessage("COMMENT.TARGET_REQUIRED", req.lang) });
+        return res.status(400).json({ message: getErrorMessage('COMMENT.TARGET_REQUIRED', req.lang) });
     }
 
     res.status(200).json(comments);
@@ -64,5 +64,5 @@ export const deleteComment = asyncHandler(async (req: Request, res: Response) =>
 
     await commentService.deleteComment(commentId, userId, req.lang || 'ko');
 
-    res.status(200).json({ message: getSuccessMessage("COMMENT.DELETED", req.lang) });
+    res.status(200).json({ message: getSuccessMessage('COMMENT.DELETED', req.lang) });
 });

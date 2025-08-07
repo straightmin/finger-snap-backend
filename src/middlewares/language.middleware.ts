@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 
 declare module 'express' {
     interface Request {
-        lang?: "ko" | "en" | "ja";
+        lang?: 'ko' | 'en' | 'ja';
     }
 }
 
@@ -13,7 +13,7 @@ declare module 'express' {
  * @param next 다음 미들웨어로 제어를 전달하는 함수
  */
 export const setLanguage = (req: Request, res: Response, next: NextFunction) => {
-    const acceptLanguage = req.headers["accept-language"];
+    const acceptLanguage = req.headers['accept-language'];
     if (acceptLanguage) {
         const languages = acceptLanguage.split(',').map(lang => lang.split(';')[0].trim());
         if (languages.includes('ko')) {

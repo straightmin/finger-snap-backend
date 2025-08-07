@@ -1,9 +1,9 @@
 // src/services/user.service.ts
-import { PrismaClient } from '@prisma/client';
 import { isFollowing } from './follow.service';
-import { getErrorMessage, Language } from "../utils/messageMapper";
+import { getErrorMessage, Language } from '../utils/messageMapper';
+import { getPrismaClient } from '../utils/prismaClient';
 
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 type UserProfileWithFollowStatus = {
     id: number;
@@ -80,8 +80,8 @@ export const updateUserProfile = async (
     userId: number,
     profileData: {
         username?: string;
-        email?: string; 
-        bio?: string; 
+        email?: string;
+        bio?: string;
         profileImageUrl?: string;
         notifyLikes?: boolean;
         notifyComments?: boolean;

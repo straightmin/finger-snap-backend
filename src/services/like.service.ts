@@ -1,5 +1,5 @@
 import { getMessage, getErrorMessage, Language } from '../utils/messageMapper';
-import { getPrismaClient } from './prismaClient';
+import { getPrismaClient } from '../utils/prismaClient';
 import * as notificationService from './notification.service';
 
 const prisma = getPrismaClient();

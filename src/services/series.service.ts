@@ -1,7 +1,8 @@
-import { PrismaClient, User } from '@prisma/client';
+import { User } from '@prisma/client';
 import { isFollowing } from './follow.service';
+import { getPrismaClient } from '../utils/prismaClient';
 
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 type AuthorWithFollowStatus = Pick<User, 'id' | 'username'> & { profileImageUrl?: string | null; isFollowed: boolean };
 

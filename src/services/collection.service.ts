@@ -1,8 +1,8 @@
-import { PrismaClient, User } from '@prisma/client';
-import { isFollowing } from './follow.service';
-import { getSuccessMessage, Language } from "../utils/messageMapper";
+import { User } from '@prisma/client';
+import { getSuccessMessage, Language } from '../utils/messageMapper';
+import { getPrismaClient } from '../utils/prismaClient';
 
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 type AuthorWithFollowStatus = Pick<User, 'id' | 'username'> & { isFollowed: boolean };
 type OwnerWithFollowStatus = Pick<User, 'id' | 'username'> & { isFollowed: boolean };
@@ -55,7 +55,7 @@ export const togglePhotoInDefaultCollection = async (userId: number, photoId: nu
         await prisma.collectionPhoto.delete({
             where: { id: existingCollectionPhoto.id },
         });
-        return { added: false, message: getSuccessMessage("COLLECTION.PHOTO_REMOVED", lang) };
+        return { added: false, message: getSuccessMessage('COLLECTION.PHOTO_REMOVED', lang) };
     } else {
         // 컬렉션에 없으면 추가
         await prisma.collectionPhoto.create({
@@ -64,7 +64,7 @@ export const togglePhotoInDefaultCollection = async (userId: number, photoId: nu
                 photoId: photoId,
             },
         });
-        return { added: true, message: getSuccessMessage("COLLECTION.PHOTO_ADDED", lang) };
+        return { added: true, message: getSuccessMessage('COLLECTION.PHOTO_ADDED', lang) };
     }
 };
 

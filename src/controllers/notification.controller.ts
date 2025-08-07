@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import * as notificationService from '../services/notification.service';
 import { asyncHandler } from '../utils/asyncHandler';
-import { getErrorMessage, getSuccessMessage } from "../utils/messageMapper";
+import { getErrorMessage, getSuccessMessage } from '../utils/messageMapper';
 
 /**
  * 사용자의 알림 목록을 조회합니다.
@@ -29,9 +29,9 @@ export const markAsRead = asyncHandler(async (req: Request, res: Response) => {
     const { notificationIds } = req.body;
 
     if (!notificationIds || !Array.isArray(notificationIds) || notificationIds.length === 0) {
-        return res.status(400).json({ message: getErrorMessage("NOTIFICATION.IDS_REQUIRED", req.lang) });
+        return res.status(400).json({ message: getErrorMessage('NOTIFICATION.IDS_REQUIRED', req.lang) });
     }
 
     await notificationService.markAsRead(userId, notificationIds);
-    res.status(200).json({ message: getSuccessMessage("NOTIFICATION.MARKED_READ", req.lang) });
+    res.status(200).json({ message: getSuccessMessage('NOTIFICATION.MARKED_READ', req.lang) });
 });

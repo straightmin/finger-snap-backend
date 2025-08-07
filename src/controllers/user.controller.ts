@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import * as userService from '../services/user.service';
 import * as photoService from '../services/photo.service';
-import { getSuccessMessage } from "../utils/messageMapper";
+import { getSuccessMessage } from '../utils/messageMapper';
 
 /**
  * 현재 사용자의 프로필 정보를 조회합니다.
@@ -91,7 +91,7 @@ export const updateNotificationPreferences = asyncHandler(async (req: Request, r
     });
 
     res.status(200).json({
-        message: getSuccessMessage("NOTIFICATION_PREFERENCES_UPDATED", req.lang),
+        message: getSuccessMessage('NOTIFICATION_PREFERENCES_UPDATED', req.lang),
         notificationPreferences: {
             notifyLikes: updatedProfile.notifyLikes,
             notifyComments: updatedProfile.notifyComments,
@@ -110,5 +110,5 @@ export const updateNotificationPreferences = asyncHandler(async (req: Request, r
 export const deleteMyAccount = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
     await userService.deleteUser(userId, req.lang);
-    res.status(200).json({ message: getSuccessMessage("USER.ACCOUNT_DELETED", req.lang) });
+    res.status(200).json({ message: getSuccessMessage('USER.ACCOUNT_DELETED', req.lang) });
 });

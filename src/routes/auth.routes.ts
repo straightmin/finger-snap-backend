@@ -1,5 +1,5 @@
 // src/routes/auth.routes.ts
-import { Router } from "express";
+import { Router } from 'express';
 import {
     register,
     login,
@@ -7,9 +7,9 @@ import {
     health,
     ping,
     logout,
-} from "../controllers/auth.controller";
-import { authenticateToken } from "../middlewares/auth.middleware";
-import { validateSchema, commonSchemas } from "../utils/validation";
+} from '../controllers/auth.controller';
+import { authenticateToken } from '../middlewares/auth.middleware';
+import { validateSchema, commonSchemas } from '../utils/validation';
 
 const router = Router();
 
@@ -54,7 +54,7 @@ const router = Router();
  *       400:
  *         description: Invalid input, or email/username already exists.
  */
-router.post("/register", validateSchema(commonSchemas.userRegister), register);
+router.post('/register', validateSchema(commonSchemas.userRegister), register);
 
 /**
  * @swagger
@@ -94,7 +94,7 @@ router.post("/register", validateSchema(commonSchemas.userRegister), register);
  *       401:
  *         description: Invalid credentials.
  */
-router.post("/login", validateSchema(commonSchemas.userLogin), login);
+router.post('/login', validateSchema(commonSchemas.userLogin), login);
 
 /**
  * @swagger
@@ -107,7 +107,7 @@ router.post("/login", validateSchema(commonSchemas.userLogin), login);
  *       200:
  *         description: Logout successful.
  */
-router.post("/logout", logout);
+router.post('/logout', logout);
 
 /**
  * @swagger
@@ -134,7 +134,7 @@ router.post("/logout", logout);
  *       401:
  *         description: Unauthorized, token is missing or invalid.
  */
-router.get("/me", authenticateToken, me);
+router.get('/me', authenticateToken, me);
 
 /**
  * @swagger
@@ -151,7 +151,7 @@ router.get("/me", authenticateToken, me);
  *               type: string
  *               example: pong
  */
-router.get("/ping", ping);
+router.get('/ping', ping);
 
 /**
  * @swagger
@@ -165,6 +165,6 @@ router.get("/ping", ping);
  *       500:
  *         description: Database connection failed.
  */
-router.get("/health", health);
+router.get('/health', health);
 
 export default router;

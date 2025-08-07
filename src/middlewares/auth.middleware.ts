@@ -1,9 +1,9 @@
 // src/middlewares/auth.middleware.ts
 // Prisma Client 초기화 방식 통일을 위해 getPrismaClient 사용
-import { getPrismaClient } from "../services/prismaClient";
+import { getPrismaClient } from '../utils/prismaClient';
 import { Request, Response, RequestHandler, NextFunction } from 'express';
-import jwt from "jsonwebtoken";
-import { getErrorMessage } from "../utils/messageMapper"; // 메시지 매퍼 임포트
+import jwt from 'jsonwebtoken';
+import { getErrorMessage } from '../utils/messageMapper'; // 메시지 매퍼 임포트
 import config from '../config';
 
 const prisma = getPrismaClient();
@@ -28,12 +28,12 @@ declare module 'express' {
 export const authenticateToken: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
     // 1. Authorization 헤더에서 토큰 추출
     // 헤더 형식: Bearer <token>
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1]; // 'Bearer ' 부분을 제외한 토큰 값
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // 'Bearer ' 부분을 제외한 토큰 값
 
     // 2. 토큰이 없는 경우 401 Unauthorized 응답
     if (token == null) {
-        res.status(401).json({ message: getErrorMessage("AUTH.AUTHENTICATION_TOKEN_REQUIRED", req.lang) });
+        res.status(401).json({ message: getErrorMessage('AUTH.AUTHENTICATION_TOKEN_REQUIRED', req.lang) });
         return;
     }
 
@@ -54,7 +54,7 @@ export const authenticateToken: RequestHandler = async (req: Request, res: Respo
 
         // 5. 사용자 정보가 없는 경우 403 Forbidden 응답 (유효하지 않은 토큰 또는 사용자 삭제)
         if (!user) {
-            res.status(403).json({ message: getErrorMessage("AUTH.INVALID_TOKEN_OR_USER_NOT_FOUND", req.lang) });
+            res.status(403).json({ message: getErrorMessage('AUTH.INVALID_TOKEN_OR_USER_NOT_FOUND', req.lang) });
             return;
         }
 
@@ -66,8 +66,8 @@ export const authenticateToken: RequestHandler = async (req: Request, res: Respo
         next();
     } catch (err) {
         // 8. 토큰 검증 실패 (만료, 위조 등) 시 403 Forbidden 응답
-        console.error("JWT verification error:", err);
-        res.status(403).json({ message: getErrorMessage("AUTH.INVALID_TOKEN_OR_USER_NOT_FOUND", req.lang) });
+        console.error('JWT verification error:', err);
+        res.status(403).json({ message: getErrorMessage('AUTH.INVALID_TOKEN_OR_USER_NOT_FOUND', req.lang) });
         return;
     }
 };

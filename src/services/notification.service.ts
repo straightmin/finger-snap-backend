@@ -1,4 +1,4 @@
-import { getPrismaClient } from './prismaClient';
+import { getPrismaClient } from '../utils/prismaClient';
 
 const prisma = getPrismaClient();
 

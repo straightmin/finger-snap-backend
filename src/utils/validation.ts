@@ -85,6 +85,16 @@ const mapJoiErrorToI18nKey = (detail: Joi.ValidationErrorItem): string => {
 };
 
 /**
+ * ID 유효성 검사 유틸리티 함수
+ * @param id 문자열 형태의 ID
+ * @returns 유효한 숫자 ID 또는 null
+ */
+export const validateId = (id: string): number | null => {
+    const numId = parseInt(id, 10);
+    return isNaN(numId) || numId <= 0 ? null : numId;
+};
+
+/**
  * 일반적인 유효성 검사 스키마들
  */
 export const commonSchemas = {

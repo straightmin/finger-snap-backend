@@ -1,13 +1,15 @@
-import { PrismaClient, User } from '@prisma/client';
+import { User } from '@prisma/client';
 import sharp from 'sharp';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import s3Client, { bucketName } from '../lib/s3Client';
 import { getErrorMessage, Language } from '../utils/messageMapper';
 import config from '../config';
 import { isFollowing } from './follow.service'; // isFollowing 함수 임포트
+import { getPrismaClient } from '../utils/prismaClient';
+
 
 // Prisma 클라이언트 인스턴스를 생성합니다.
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 type AuthorWithFollowStatus = Pick<User, 'id' | 'username'> & { isFollowed: boolean };
 

@@ -1,5 +1,5 @@
 // src/services/follow.service.ts
-import { getPrismaClient } from './prismaClient';
+import { getPrismaClient } from '../utils/prismaClient';
 import * as notificationService from './notification.service';
 import { getSuccessMessage, getErrorMessage, Language } from '../utils/messageMapper';
 
