@@ -4,12 +4,12 @@ import * as notificationService from './notification.service';
 
 const prisma = getPrismaClient();
 
-export type LikeTarget =
-    | { photoId: number; seriesId?: never; commentId?: never }
-    | { photoId?: never; seriesId: number; commentId?: never }
-    | { photoId?: never; seriesId?: never; commentId: number };
-
-type LikeWhereClause = { userId_photoId: { userId: number; photoId: number; } } | { userId_seriesId: { userId: number; seriesId: number; } } | { userId_commentId: { userId: number; commentId: number; } };
+export type LikeTarget = {
+    userId: number;
+    photoId?: number;
+    seriesId?: number;
+    commentId?: number;
+};
 
 /**
  * 사진, 시리즈, 또는 댓글에 대한 좋아요를 토글합니다.
@@ -18,10 +18,13 @@ type LikeWhereClause = { userId_photoId: { userId: number; photoId: number; } } 
  * @param lang 언어 설정
  * @returns 좋아요 토글 결과
  */
-export const toggleLike = async (userId: number, target: LikeTarget, lang: Language) => {
-    const { photoId, seriesId, commentId } = target;
+export const toggleLike = async (target: LikeTarget, lang: Language) => {
+    const { userId, photoId, seriesId, commentId } = target;
 
-    let likeWhere: LikeWhereClause;
+    let likeWhere: 
+        | { userId_photoId: { userId: number; photoId: number } }
+        | { userId_seriesId: { userId: number; seriesId: number } }
+        | { userId_commentId: { userId: number; commentId: number } };
     let targetOwnerId: number;
 
     if (photoId) {
@@ -63,7 +66,7 @@ export const toggleLike = async (userId: number, target: LikeTarget, lang: Langu
         return { message: getMessage('INFO.LIKE.TARGET_UNLIKED', lang, { targetType }), liked: false };
     } else {
         const newLike = await prisma.like.create({
-            data: { userId, ...target },
+            data: { userId, photoId, seriesId, commentId },
         });
 
         await notificationService.createNotification({
@@ -71,7 +74,9 @@ export const toggleLike = async (userId: number, target: LikeTarget, lang: Langu
             actorId: userId,
             eventType: 'NEW_LIKE',
             likeId: newLike.id,
-            ...target,
+            photoId,
+            seriesId,
+            commentId,
         });
 
         const targetType = photoId ? 'Photo' : seriesId ? 'Series' : 'Comment';

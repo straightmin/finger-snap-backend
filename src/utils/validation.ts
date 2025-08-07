@@ -57,32 +57,56 @@ export const validateSchema = (schema: Joi.ObjectSchema, property: 'body' | 'par
  * @param detail Joi 에러 세부사항
  * @returns i18n 키
  */
-const mapJoiErrorToI18nKey = (detail: Joi.ValidationErrorItem): string => {
-    const { type, context } = detail;
+const mapJoiErrorToI18nKeyMemo = (() => {
+    const cache = new Map<string, string>();
     
-    switch (type) {
-        case 'any.required':
-            return 'VALIDATION.REQUIRED';
-        case 'string.empty':
-            return 'VALIDATION.EMPTY';
-        case 'string.min':
-            return 'VALIDATION.STRING_MIN';
-        case 'string.max':
-            return 'VALIDATION.STRING_MAX';
-        case 'string.email':
-            return 'VALIDATION.EMAIL_INVALID';
-        case 'number.min':
-            return 'VALIDATION.NUMBER_MIN';
-        case 'number.max':
-            return 'VALIDATION.NUMBER_MAX';
-        case 'number.positive':
-            return 'VALIDATION.NUMBER_POSITIVE';
-        case 'boolean.base':
-            return 'VALIDATION.BOOLEAN_INVALID';
-        default:
-            return 'VALIDATION.INVALID';
-    }
-};
+    return (detail: Joi.ValidationErrorItem): string => {
+        const { type } = detail;
+        
+        if (cache.has(type)) {
+            return cache.get(type)!;
+        }
+        
+        let result: string;
+        switch (type) {
+            case 'any.required':
+                result = 'VALIDATION.REQUIRED';
+                break;
+            case 'string.empty':
+                result = 'VALIDATION.EMPTY';
+                break;
+            case 'string.min':
+                result = 'VALIDATION.STRING_MIN';
+                break;
+            case 'string.max':
+                result = 'VALIDATION.STRING_MAX';
+                break;
+            case 'string.email':
+                result = 'VALIDATION.EMAIL_INVALID';
+                break;
+            case 'number.min':
+                result = 'VALIDATION.NUMBER_MIN';
+                break;
+            case 'number.max':
+                result = 'VALIDATION.NUMBER_MAX';
+                break;
+            case 'number.positive':
+                result = 'VALIDATION.NUMBER_POSITIVE';
+                break;
+            case 'boolean.base':
+                result = 'VALIDATION.BOOLEAN_INVALID';
+                break;
+            default:
+                result = 'VALIDATION.INVALID';
+                break;
+        }
+        
+        cache.set(type, result);
+        return result;
+    };
+})();
+
+const mapJoiErrorToI18nKey = mapJoiErrorToI18nKeyMemo;
 
 /**
  * ID 유효성 검사 유틸리티 함수

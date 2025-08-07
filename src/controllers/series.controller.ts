@@ -5,6 +5,7 @@ import * as seriesService from '../services/series.service';
 import { getErrorMessage, getSuccessMessage } from '../utils/messageMapper';
 import { validateId } from '../utils/validation';
 import { sendErrorResponse, sendSuccessResponse } from '../utils/response';
+import { Prisma } from '@prisma/client';
 
 /**
  * 새 시리즈를 생성합니다.
@@ -186,8 +187,16 @@ export const removePhotoFromSeries = asyncHandler(async (req: Request, res: Resp
     try {
         await seriesService.removePhotoFromSeries(seriesIdNum, photoIdNum);
         res.status(204).send();
-    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
-        res.status(404).json({ message: getErrorMessage('SERIES.PHOTO_NOT_FOUND', req.lang) });
+    } catch (error) {
+        if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === 'P2025'
+        ) {
+            return sendErrorResponse(res, 404, 'SERIES.PHOTO_NOT_FOUND', req.lang);
+        } else {
+            // 예기치 않은 에러는 500으로 처리
+            return sendErrorResponse(res, 500, 'GLOBAL.UNEXPECTED_ERROR', req.lang);
+        }
     }
 });
 

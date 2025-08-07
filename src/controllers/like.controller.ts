@@ -23,16 +23,14 @@ export const toggleLike = asyncHandler(async (req: Request, res: Response) => {
         return res.status(400).json({ message: getErrorMessage('LIKE.TARGET_REQUIRED', req.lang) });
     }
 
-    let target: LikeTarget | undefined;
-    if (photoId) {
-        target = { photoId: Number(photoId) };
-    } else if (seriesId) {
-        target = { seriesId: Number(seriesId) };
-    } else if (commentId) {
-        target = { commentId: Number(commentId) };
-    }
+    const target = {
+        userId,
+        ...(photoId && { photoId: Number(photoId) }),
+        ...(seriesId && { seriesId: Number(seriesId) }),
+        ...(commentId && { commentId: Number(commentId) })
+    };
 
-    const result = await likeService.toggleLike(userId, target!, req.lang || 'ko');
+    const result = await likeService.toggleLike(target, req.lang || 'ko');
 
     res.status(200).json(result);
 });

@@ -161,6 +161,7 @@ export const createPhoto = async (photoData: {
     const { title, description, file, userId } = photoData;
 
     // 1. 원본 이미지 리사이징
+    const MAX_IMAGE_DIMENSION = 1920;
     const image = sharp(file.buffer);
     const metadata = await image.metadata();
     const { width, height } = metadata;
@@ -170,15 +171,15 @@ export const createPhoto = async (photoData: {
         let resizeOptions: { width?: number; height?: number } = {};
         
         // 가로와 세로를 개별적으로 체크하여 적절한 리사이징 적용
-        if (width > 1920 && height > 1920) {
-            // 둘 다 1920을 초과하는 경우, 더 큰 쪽을 기준으로 비율 유지
-            resizeOptions = width > height ? { width: 1920 } : { height: 1920 };
-        } else if (width > 1920) {
-            // 가로만 1920을 초과하는 경우
-            resizeOptions = { width: 1920 };
-        } else if (height > 1920) {
-            // 세로만 1920을 초과하는 경우
-            resizeOptions = { height: 1920 };
+        if (width > MAX_IMAGE_DIMENSION && height > MAX_IMAGE_DIMENSION) {
+            // 둘 다 MAX_IMAGE_DIMENSION을 초과하는 경우, 더 큰 쪽을 기준으로 비율 유지
+            resizeOptions = width > height ? { width: MAX_IMAGE_DIMENSION } : { height: MAX_IMAGE_DIMENSION };
+        } else if (width > MAX_IMAGE_DIMENSION) {
+            // 가로만 MAX_IMAGE_DIMENSION을 초과하는 경우
+            resizeOptions = { width: MAX_IMAGE_DIMENSION };
+        } else if (height > MAX_IMAGE_DIMENSION) {
+            // 세로만 MAX_IMAGE_DIMENSION을 초과하는 경우
+            resizeOptions = { height: MAX_IMAGE_DIMENSION };
         }
         
         // 리사이징이 필요한 경우에만 처리

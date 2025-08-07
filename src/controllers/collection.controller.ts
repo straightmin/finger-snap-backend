@@ -5,6 +5,7 @@ import * as collectionService from '../services/collection.service';
 import { getErrorMessage } from '../utils/messageMapper';
 import { validateId } from '../utils/validation';
 import { sendErrorResponse } from '../utils/response';
+import { Prisma } from '@prisma/client';
 
 /**
  * 사진을 기본 컬렉션에 추가하거나 제거합니다.
@@ -233,8 +234,15 @@ export const removePhotoFromCollection = asyncHandler(async (req: Request, res: 
     try {
         await collectionService.removePhotoFromCollection(collectionIdNum, photoIdNum);
         res.status(204).send();
-    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
-        // Prisma의 P2025 코드는 레코드를 찾지 못했을 때 발생합니다.
-        res.status(404).json({ message: getErrorMessage('COLLECTION.PHOTO_NOT_FOUND', req.lang) });
+    } catch (error) {
+        if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === 'P2025'
+        ) {
+            return sendErrorResponse(res, 404, 'COLLECTION.PHOTO_NOT_FOUND', req.lang);
+        } else {
+            // 예기치 않은 에러는 500으로 처리
+            return sendErrorResponse(res, 500, 'GLOBAL.UNEXPECTED_ERROR', req.lang);
+        }
     }
 });
