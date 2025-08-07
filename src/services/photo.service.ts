@@ -70,7 +70,7 @@ export const getPhotos = async (sortBy: string, currentUserId?: number) => {
     }
 
     // 각 사진의 작성자에 대한 팔로우 상태 추가
-    // Collect all unique author IDs from the photos
+    // 사진 목록에서 모든 고유한 작성자 ID를 수집합니다.
     const authorIds = Array.from(new Set(photos.map(photo => photo.author?.id).filter(id => id !== undefined)));
 
     // Batch query to check follow status for all authors
