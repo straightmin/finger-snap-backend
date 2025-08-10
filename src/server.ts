@@ -1,5 +1,6 @@
 // src/server.ts
 import express from 'express';
+import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import { specs } from './config/swagger'; // Swagger 설정 임포트
 import config from './config'; // 중앙 설정 파일 임포트
@@ -17,6 +18,14 @@ import { setLanguage } from './middlewares/language.middleware';
 
 // Express 애플리케이션을 생성합니다.
 const app = express();
+
+// CORS 설정 - 프론트엔드와의 통신을 위해 필수
+app.use(cors({
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'], // Next.js 개발 서버
+    credentials: true, // 인증 헤더 허용
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language']
+}));
 
 // 개발 환경에서만 Swagger UI를 활성화합니다.
 if (process.env.NODE_ENV !== 'production') {
