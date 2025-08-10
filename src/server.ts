@@ -12,6 +12,7 @@ import followRoutes from './routes/follow.routes';
 import collectionRoutes from './routes/collection.routes'; // 추가
 import seriesRoutes from './routes/series.routes';
 import notificationRoutes from './routes/notification.routes';
+import imageRoutes from './routes/image.routes';
 import { errorHandler } from './middlewares/errorHandler';
 import userRoutes from './routes/user.routes';
 import { setLanguage } from './middlewares/language.middleware';
@@ -65,6 +66,9 @@ app.use('/api/users', followRoutes);
 
 // 알림 관련 라우트를 /api/notifications 경로에 등록합니다.
 app.use('/api/notifications', notificationRoutes);
+
+// 이미지 프록시 라우트를 /api/images 경로에 등록합니다.
+app.use('/api/images', imageRoutes);
 
 // 오류 처리 미들웨어
 app.use(errorHandler);

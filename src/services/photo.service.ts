@@ -1,6 +1,6 @@
 import { User } from '@prisma/client';
 import sharp from 'sharp';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import s3Client, { bucketName } from '../lib/s3Client';
 import { getErrorMessage, Language } from '../utils/messageMapper';
 import config from '../config';
@@ -219,15 +219,29 @@ export const createPhoto = async (photoData: {
     const imageUrl = `https://${bucketName}.s3.${config.AWS_REGION}.amazonaws.com/${originalKey}`;
     const thumbnailUrl = `https://${bucketName}.s3.${config.AWS_REGION}.amazonaws.com/${thumbnailKey}`;
 
-    // 4. DB에 사진 정보 저장
-    return prisma.photo.create({
+    // 4. DB에 사진 정보 저장 (일단 S3 URL로 저장)
+    const photo = await prisma.photo.create({
         data: {
             title: title || 'Untitled',
             description: description || null,
-            imageUrl, // 원본 이미지 URL
-            thumbnailUrl, // 썸네일 이미지 URL
+            imageUrl, // 원본 이미지 URL (S3 직접 URL)
+            thumbnailUrl, // 썸네일 이미지 URL (S3 직접 URL)
             userId,
         },
+    });
+
+    // 5. 프록시 URL로 업데이트
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+    const proxyImageUrl = `${backendUrl}/api/images/${photo.id}`;
+    const proxyThumbnailUrl = `${backendUrl}/api/images/thumbnails/${photo.id}`;
+
+    // DB에서 프록시 URL로 업데이트
+    return prisma.photo.update({
+        where: { id: photo.id },
+        data: { 
+            imageUrl: proxyImageUrl,
+            thumbnailUrl: proxyThumbnailUrl 
+        }
     });
 };
 
@@ -318,4 +332,54 @@ export const getLikedPhotos = async (userId: number) => {
             createdAt: 'desc',
         },
     });
+};
+
+/**
+ * S3에서 이미지를 가져와 스트림으로 반환
+ * @param s3Key S3 객체 키 (예: "photos/13/1754823820302-Yellow.jpg")
+ * @returns S3 이미지 스트림
+ */
+export const getImageFromS3 = async (s3Key: string) => {
+    const command = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: s3Key,
+    });
+
+    try {
+        const response = await s3Client.send(command);
+        return {
+            body: response.Body,
+            contentType: response.ContentType,
+            contentLength: response.ContentLength,
+            lastModified: response.LastModified,
+        };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`S3 이미지 조회 실패: ${errorMessage}`);
+    }
+};
+
+/**
+ * 사진 ID로 S3 키 정보 조회
+ */
+export const getPhotoS3Keys = async (photoId: number) => {
+    const photo = await prisma.photo.findUnique({
+        where: { id: photoId },
+        select: { imageUrl: true, thumbnailUrl: true }
+    });
+
+    if (!photo) {
+        throw new Error('사진을 찾을 수 없습니다.');
+    }
+
+    // URL에서 S3 키 추출
+    const extractS3Key = (url: string) => {
+        const match = url.match(/amazonaws\.com\/(.+)$/);
+        return match ? match[1] : null;
+    };
+
+    return {
+        imageKey: extractS3Key(photo.imageUrl),
+        thumbnailKey: extractS3Key(photo.thumbnailUrl),
+    };
 };
