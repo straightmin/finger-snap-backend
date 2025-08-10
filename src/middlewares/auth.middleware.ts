@@ -1,40 +1,45 @@
 // src/middlewares/auth.middleware.ts
+// Prisma Client 초기화 방식 통일을 위해 getPrismaClient 사용
+import { getPrismaClient } from '../utils/prismaClient';
 import { Request, Response, RequestHandler, NextFunction } from 'express';
-import jwt from "jsonwebtoken";
-import prisma from "../lib/prisma"; // Prisma 클라이언트 임포트
-import { getMessage } from "../utils/messageMapper"; // 메시지 매퍼 임포트
+import jwt from 'jsonwebtoken';
+import { getErrorMessage } from '../utils/messageMapper'; // 메시지 매퍼 임포트
+import config from '../config';
+
+const prisma = getPrismaClient();
 
 // Request 객체에 user 속성을 추가하기 위한 타입 확장
-declare global {
-    namespace Express {
-        interface Request {
-            user?: {
-                id: number;
-                email: string;
-                username: string;
-            };
-        }
+declare module 'express' {
+    interface Request {
+        user?: {
+            id: number;
+            email: string;
+            username: string;
+        };
     }
 }
 
-// JWT 검증 미들웨어
+/**
+ * JWT 토큰을 검증하고 사용자 정보를 Request 객체에 추가하는 미들웨어입니다.
+ * @param req HTTP 요청 객체
+ * @param res HTTP 응답 객체
+ * @param next 다음 미들웨어로 제어를 전달하는 함수
+ */
 export const authenticateToken: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
     // 1. Authorization 헤더에서 토큰 추출
     // 헤더 형식: Bearer <token>
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1]; // 'Bearer ' 부분을 제외한 토큰 값
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // 'Bearer ' 부분을 제외한 토큰 값
 
     // 2. 토큰이 없는 경우 401 Unauthorized 응답
     if (token == null) {
-        res.status(401).json({ message: getMessage("AUTHENTICATION_TOKEN_REQUIRED") });
+        res.status(401).json({ message: getErrorMessage('AUTH.AUTHENTICATION_TOKEN_REQUIRED', req.lang) });
         return;
     }
 
     try {
         // 3. JWT 토큰 검증
-        // process.env.JWT_SECRET은 .env 파일에 정의된 JWT 비밀 키입니다.
-        // 실제 프로젝트에서는 이 비밀 키를 안전하게 관리해야 합니다.
-        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
+        const decoded = jwt.verify(token, config.JWT_SECRET) as {
             userid: number;
             email: string;
             username: string;
@@ -49,7 +54,7 @@ export const authenticateToken: RequestHandler = async (req: Request, res: Respo
 
         // 5. 사용자 정보가 없는 경우 403 Forbidden 응답 (유효하지 않은 토큰 또는 사용자 삭제)
         if (!user) {
-            res.status(403).json({ message: getMessage("INVALID_TOKEN_OR_USER_NOT_FOUND") });
+            res.status(403).json({ message: getErrorMessage('AUTH.INVALID_TOKEN_OR_USER_NOT_FOUND', req.lang) });
             return;
         }
 
@@ -61,8 +66,8 @@ export const authenticateToken: RequestHandler = async (req: Request, res: Respo
         next();
     } catch (err) {
         // 8. 토큰 검증 실패 (만료, 위조 등) 시 403 Forbidden 응답
-        console.error("JWT verification error:", err);
-        res.status(403).json({ message: getMessage("INVALID_TOKEN_OR_USER_NOT_FOUND") });
+        console.error('JWT verification error:', err);
+        res.status(403).json({ message: getErrorMessage('AUTH.INVALID_TOKEN_OR_USER_NOT_FOUND', req.lang) });
         return;
     }
 };

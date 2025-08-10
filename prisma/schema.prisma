@@ -9,23 +9,45 @@ datasource db {
 
 /// 사용자
 model User {
-  id            Int            @id @default(autoincrement()) @map("id")
-  email         String         @unique @map("email")
-  passwordHash  String         @map("password_hash")
-  username      String         @map("username")
-  bio           String?        @map("bio")
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
-  deletedAt     DateTime?      @map("deleted_at")
-  collections   Collection[]
-  comments      Comment[]
-  photoLikes    PhotoLike[]
-  commentLikes  CommentLike[]
-  notifications Notification[]
-  photos        Photo[]
-  series        Series[]
+  id                    Int              @id @default(autoincrement()) @map("id")
+  email                 String           @unique @map("email")
+  passwordHash          String           @map("password_hash")
+  username              String           @map("username")
+  bio                   String?          @map("bio")
+  profileImageUrl       String?          @map("profile_image_url")
+  // 알림 설정
+  notifyLikes           Boolean          @default(true) @map("notify_likes")
+  notifyComments        Boolean          @default(true) @map("notify_comments")
+  notifyFollows         Boolean          @default(true) @map("notify_follows")
+  notifySeries          Boolean          @default(true) @map("notify_series")
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+  deletedAt             DateTime?        @map("deleted_at")
+  collections           Collection[]
+  comments              Comment[]
+  likes                 Like[]
+  photos                Photo[]
+  series                Series[]
+  followers             Follow[]         @relation("Following")
+  following             Follow[]         @relation("Follower")
+  receivedNotifications Notification[]   @relation("UserReceivedNotifications")
+  sentNotifications     Notification[]   @relation("UserSentNotifications")
 
   @@map("users")
+}
+
+// 팔로우 관계
+model Follow {
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  notifications Notification[] @relation("NotificationToFollow")
+
+  @@unique([followerId, followingId])
 }
 
 /// 사진(게시물)
@@ -41,12 +63,13 @@ model Photo {
   createdAt     DateTime          @default(now()) @map("created_at")
   updatedAt     DateTime          @updatedAt @map("updated_at")
   deletedAt     DateTime?         @map("deleted_at")
-  inCollections CollectionPhoto[]
-  comments      Comment[]
-  likes         PhotoLike[]
   author        User              @relation(fields: [userId], references: [id])
   series        Series[]          @relation("SeriesCover")
   inSeries      SeriesPhoto[]     @relation("SeriesToPhoto")
+  inCollections CollectionPhoto[]
+  comments      Comment[]
+  likes         Like[]
+  notifications Notification[]
 
   @@index([userId])
   @@map("photos")
@@ -55,50 +78,52 @@ model Photo {
 /// 댓글
 model Comment {
   id        Int       @id @default(autoincrement()) @map("id")
-  photoId   Int       @map("photo_id")
   userId    Int       @map("user_id")
   content   String    @map("content")
-  parentId  Int?      @map("parent_id")
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
-  likes     CommentLike[]
-  photo     Photo     @relation(fields: [photoId], references: [id])
-  author    User      @relation(fields: [userId], references: [id])
 
-  @@index([photoId])
+  // Polymorphic relation
+  photoId   Int?      @map("photo_id")
+  seriesId  Int?      @map("series_id")
+  parentId  Int?      @map("parent_id")
+
+  author    User      @relation(fields: [userId], references: [id])
+  photo     Photo?    @relation(fields: [photoId], references: [id])
+  series    Series?   @relation(fields: [seriesId], references: [id])
+  parent    Comment?  @relation("ReplyTo", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies   Comment[] @relation("ReplyTo")
+  likes     Like[]
+  notifications Notification[]
+
   @@index([userId])
+  @@index([photoId])
+  @@index([seriesId])
   @@map("comments")
 }
 
-/// 사진 좋아요
-model PhotoLike {
+/// 좋아요 (다형성)
+model Like {
   id        Int      @id @default(autoincrement()) @map("id")
   userId    Int      @map("user_id")
-  photoId   Int      @map("photo_id")
   createdAt DateTime @default(now()) @map("created_at")
+
+  // Polymorphic relation
+  photoId   Int?     @map("photo_id")
+  seriesId  Int?     @map("series_id")
+  commentId Int?     @map("comment_id")
+
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  photo     Photo?   @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  series    Series?  @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  notifications Notification[]
 
   @@unique([userId, photoId])
-  @@index([userId])
-  @@index([photoId])
-  @@map("photo_likes")
-}
-
-/// 댓글 좋아요
-model CommentLike {
-  id        Int      @id @default(autoincrement()) @map("id")
-  userId    Int      @map("user_id")
-  commentId Int      @map("comment_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
-
+  @@unique([userId, seriesId])
   @@unique([userId, commentId])
-  @@index([userId])
-  @@index([commentId])
-  @@map("comment_likes")
+  @@map("likes")
 }
 
 /// 컬렉션(북마크 모음)
@@ -109,8 +134,8 @@ model Collection {
   description String?           @map("description")
   createdAt   DateTime          @default(now()) @map("created_at")
   updatedAt   DateTime          @updatedAt @map("updated_at")
-  photos      CollectionPhoto[]
   owner       User              @relation(fields: [userId], references: [id])
+  photos      CollectionPhoto[]
 
   @@index([userId])
   @@map("collections")
@@ -129,16 +154,29 @@ model CollectionPhoto {
   @@map("collection_photos")
 }
 
-/// 알림
+/// 알림 (다형성)
 model Notification {
-  id           Int     @id @default(autoincrement()) @map("id")
-  userId       Int     @map("user_id")
-  content      String  @map("content")
-  isRead       Boolean @default(false) @map("is_read")
-  resourceId   Int?    @map("resource_id")
-  resourceType String? @map("resource_type")
-  createdAt    DateTime @default(now()) @map("created_at")
-  receiver     User    @relation(fields: [userId], references: [id])
+  id        Int      @id @default(autoincrement()) @map("id")
+  userId    Int      @map("user_id") // 알림을 받는 사용자
+  actorId   Int      @map("actor_id") // 알림을 발생시킨 사용자
+  eventType String   @map("event_type") // NEW_LIKE, NEW_COMMENT, FOLLOW 등
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Polymorphic relation
+  photoId   Int?     @map("photo_id")
+  seriesId  Int?     @map("series_id")
+  commentId Int?     @map("comment_id")
+  likeId    Int?     @unique @map("like_id")
+  followId  Int?     @unique @map("follow_id")
+
+  receiver  User     @relation("UserReceivedNotifications", fields: [userId], references: [id])
+  actor     User     @relation("UserSentNotifications", fields: [actorId], references: [id])
+  photo     Photo?   @relation(fields: [photoId], references: [id])
+  series    Series?  @relation(fields: [seriesId], references: [id])
+  comment   Comment? @relation(fields: [commentId], references: [id])
+  like      Like?    @relation(fields: [likeId], references: [id])
+  follow    Follow?  @relation("NotificationToFollow", fields: [followId], references: [id])
 
   @@index([userId])
   @@map("notifications")
@@ -154,9 +192,13 @@ model Series {
   isPublic     Boolean       @default(true) @map("is_public")
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
-  coverPhoto   Photo?        @relation("SeriesCover", fields: [coverPhotoId], references: [id])
+  deletedAt    DateTime?     @map("deleted_at")
   author       User          @relation(fields: [userId], references: [id])
+  coverPhoto   Photo?        @relation("SeriesCover", fields: [coverPhotoId], references: [id])
   photos       SeriesPhoto[] @relation("SeriesToPhoto")
+  comments     Comment[]
+  likes        Like[]
+  notifications Notification[]
 
   @@index([userId])
   @@map("series")
@@ -169,8 +211,8 @@ model SeriesPhoto {
   photoId   Int
   position  Int      @default(0)
   createdAt DateTime @default(now())
-  photo     Photo    @relation("SeriesToPhoto", fields: [photoId], references: [id])
   series    Series   @relation("SeriesToPhoto", fields: [seriesId], references: [id])
+  photo     Photo    @relation("SeriesToPhoto", fields: [photoId], references: [id])
 
   @@unique([seriesId, photoId])
   @@index([seriesId, position])

@@ -1,0 +1,233 @@
+// src/controllers/series.controller.ts
+import { Request, Response } from 'express';
+import { asyncHandler } from '../utils/asyncHandler';
+import * as seriesService from '../services/series.service';
+import { getErrorMessage, getSuccessMessage } from '../utils/messageMapper';
+import { validateId } from '../utils/validation';
+import { sendErrorResponse, sendSuccessResponse } from '../utils/response';
+import { Prisma } from '@prisma/client';
+
+/**
+ * 새 시리즈를 생성합니다.
+ * @param req HTTP 요청 객체 (title, description, coverPhotoId, isPublic 포함)
+ * @param res HTTP 응답 객체
+ * @returns 생성된 시리즈 객체
+ */
+export const createSeries = asyncHandler(async (req: Request, res: Response) => {
+    const { title, description, coverPhotoId, isPublic } = req.body;
+    const userId = req.user!.id;
+
+    if (!title) {
+        return sendErrorResponse(res, 400, 'SERIES.TITLE_REQUIRED', req.lang);
+    }
+
+    const series = await seriesService.createSeries(userId, title, description, coverPhotoId, isPublic);
+    res.status(201).json(series);
+});
+
+/**
+ * 특정 시리즈의 상세 정보를 조회합니다.
+ * @param req HTTP 요청 객체 (시리즈 ID 포함)
+ * @param res HTTP 응답 객체
+ * @returns 시리즈 상세 정보
+ */
+export const getSeriesById = asyncHandler(async (req: Request, res: Response) => {
+    const seriesId = validateId(req.params.id);
+    const currentUserId = req.user?.id;
+
+    if (!seriesId) {
+        return sendErrorResponse(res, 400, 'SERIES.INVALID_ID', req.lang);
+    }
+
+    const series = await seriesService.getSeriesById(seriesId, currentUserId);
+
+    if (!series) {
+        res.status(404).json({ message: getErrorMessage('SERIES.NOT_FOUND', req.lang) });
+        return;
+    }
+
+    res.status(200).json(series);
+});
+
+/**
+ * 현재 로그인된 사용자의 모든 시리즈 목록을 조회합니다.
+ * @param req HTTP 요청 객체 (인증된 사용자 정보 포함)
+ * @param res HTTP 응답 객체
+ * @returns 사용자의 시리즈 목록
+ */
+export const getMySeries = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+    const series = await seriesService.getUserSeries(userId, userId);
+    res.status(200).json(series);
+});
+
+/**
+ * 시리즈 정보를 수정합니다.
+ * @param req HTTP 요청 객체 (시리즈 ID, title, description, coverPhotoId, isPublic 포함)
+ * @param res HTTP 응답 객체
+ * @returns 수정된 시리즈 객체
+ */
+export const updateSeries = asyncHandler(async (req: Request, res: Response) => {
+    const seriesId = validateId(req.params.id);
+    const { title, description, coverPhotoId, isPublic } = req.body;
+    const userId = req.user!.id;
+
+    if (!seriesId) {
+        return sendErrorResponse(res, 400, 'SERIES.INVALID_ID', req.lang);
+    }
+
+    const series = await seriesService.getSeriesById(seriesId);
+
+    if (!series) {
+        res.status(404).json({ message: getErrorMessage('SERIES.NOT_FOUND', req.lang) });
+        return;
+    }
+
+    if (series.userId !== userId) {
+        res.status(403).json({ message: getErrorMessage('SERIES.UNAUTHORIZED_UPDATE', req.lang) });
+        return;
+    }
+
+    const updatedSeries = await seriesService.updateSeries(seriesId, { title, description, coverPhotoId, isPublic });
+    res.status(200).json(updatedSeries);
+});
+
+/**
+ * 시리즈를 삭제합니다.
+ * @param req HTTP 요청 객체 (시리즈 ID 포함)
+ * @param res HTTP 응답 객체
+ */
+export const deleteSeries = asyncHandler(async (req: Request, res: Response) => {
+    const seriesId = validateId(req.params.id);
+    const userId = req.user!.id;
+
+    if (!seriesId) {
+        return sendErrorResponse(res, 400, 'SERIES.INVALID_ID', req.lang);
+    }
+
+    const series = await seriesService.getSeriesById(seriesId);
+
+    if (!series) {
+        res.status(404).json({ message: getErrorMessage('SERIES.NOT_FOUND', req.lang) });
+        return;
+    }
+
+    if (series.userId !== userId) {
+        res.status(403).json({ message: getErrorMessage('SERIES.UNAUTHORIZED_DELETE', req.lang) });
+        return;
+    }
+
+    await seriesService.deleteSeries(seriesId);
+    res.status(204).send();
+});
+
+/**
+ * 시리즈에 사진을 추가합니다.
+ * @param req HTTP 요청 객체 (시리즈 ID, 사진 ID 포함)
+ * @param res HTTP 응답 객체
+ * @returns 추가된 사진 정보
+ */
+export const addPhotoToSeries = asyncHandler(async (req: Request, res: Response) => {
+    const { seriesId, photoId } = req.params;
+    const userId = req.user!.id;
+
+    const seriesIdNum = parseInt(seriesId, 10);
+    const photoIdNum = parseInt(photoId, 10);
+
+    if (isNaN(seriesIdNum) || isNaN(photoIdNum)) {
+        res.status(400).json({ message: getErrorMessage('GLOBAL.INVALID_ID', req.lang) });
+        return;
+    }
+
+    const series = await seriesService.getSeriesById(seriesIdNum);
+
+    if (!series) {
+        res.status(404).json({ message: getErrorMessage('SERIES.NOT_FOUND', req.lang) });
+        return;
+    }
+
+    if (series.userId !== userId) {
+        res.status(403).json({ message: getErrorMessage('SERIES.UNAUTHORIZED_ADD_PHOTO', req.lang) });
+        return;
+    }
+
+    const result = await seriesService.addPhotoToSeries(seriesIdNum, photoIdNum);
+    res.status(201).json(result);
+});
+
+/**
+ * 시리즈에서 사진을 제거합니다.
+ * @param req HTTP 요청 객체 (시리즈 ID, 사진 ID 포함)
+ * @param res HTTP 응답 객체
+ */
+export const removePhotoFromSeries = asyncHandler(async (req: Request, res: Response) => {
+    const { seriesId, photoId } = req.params;
+    const userId = req.user!.id;
+
+    const seriesIdNum = parseInt(seriesId, 10);
+    const photoIdNum = parseInt(photoId, 10);
+
+    if (isNaN(seriesIdNum) || isNaN(photoIdNum)) {
+        res.status(400).json({ message: getErrorMessage('GLOBAL.INVALID_ID', req.lang) });
+        return;
+    }
+
+    const series = await seriesService.getSeriesById(seriesIdNum);
+
+    if (!series) {
+        res.status(404).json({ message: getErrorMessage('SERIES.NOT_FOUND', req.lang) });
+        return;
+    }
+
+    if (series.userId !== userId) {
+        res.status(403).json({ message: getErrorMessage('SERIES.UNAUTHORIZED_REMOVE_PHOTO', req.lang) });
+        return;
+    }
+
+    try {
+        await seriesService.removePhotoFromSeries(seriesIdNum, photoIdNum);
+        res.status(204).send();
+    } catch (error) {
+        if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === 'P2025'
+        ) {
+            return sendErrorResponse(res, 404, 'SERIES.PHOTO_NOT_FOUND', req.lang);
+        } else {
+            // 예기치 않은 에러는 500으로 처리
+            return sendErrorResponse(res, 500, 'GLOBAL.UNEXPECTED_ERROR', req.lang);
+        }
+    }
+});
+
+/**
+ * 시리즈 내 사진들의 순서를 업데이트합니다.
+ * @param req HTTP 요청 객체 (시리즈 ID, photoOrders 배열 포함)
+ * @param res HTTP 응답 객체
+ * @returns 순서 업데이트 성공 메시지
+ */
+export const updateSeriesPhotoOrder = asyncHandler(async (req: Request, res: Response) => {
+    const seriesId = parseInt(req.params.seriesId, 10);
+    const { photoOrders } = req.body; // photoOrders는 [{ photoId: number, position: number }] 형태
+    const userId = req.user!.id;
+
+    if (isNaN(seriesId) || !Array.isArray(photoOrders)) {
+        res.status(400).json({ message: getErrorMessage('GLOBAL.INVALID_INPUT', req.lang) });
+        return;
+    }
+
+    const series = await seriesService.getSeriesById(seriesId);
+
+    if (!series) {
+        res.status(404).json({ message: getErrorMessage('SERIES.NOT_FOUND', req.lang) });
+        return;
+    }
+
+    if (series.userId !== userId) {
+        res.status(403).json({ message: getErrorMessage('SERIES.UNAUTHORIZED_UPDATE', req.lang) });
+        return;
+    }
+
+    await seriesService.updateSeriesPhotoOrder(seriesId, photoOrders);
+    res.status(200).json({ message: getSuccessMessage('SERIES.PHOTO_ORDER_UPDATED', req.lang) });
+});

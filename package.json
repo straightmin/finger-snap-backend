@@ -2,40 +2,47 @@
     "name": "finger-snap-backend",
     "version": "1.0.0",
     "main": "server.ts",
+    "type": "module",
     "scripts": {
-        "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+        "dev": "tsx watch src/server.ts",
         "build": "tsc",
-        "start": "node dist/server.js"
+        "start": "node dist/server.js",
+        "lint": "eslint src/**/*.ts"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "description": "",
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.846.0",
         "@prisma/client": "^6.10.0",
         "@types/bcrypt": "^5.0.2",
+        "@types/joi": "^17.2.2",
         "@types/multer": "^2.0.0",
-        "@types/multer-s3": "^3.0.3",
-        "aws-sdk": "^2.1692.0",
         "bcrypt": "^6.0.0",
-        "bcryptjs": "^3.0.2",
         "dotenv": "^16.5.0",
         "express": "^5.0.1",
+        "joi": "^17.13.3",
         "jsonwebtoken": "^9.0.2",
         "multer": "^2.0.1",
-        "multer-s3": "^3.0.1",
-        "npm": "^11.4.2",
         "sharp": "^0.34.3"
     },
     "devDependencies": {
-        "@types/bcryptjs": "^2.4.6",
         "@types/express": "^5.0.1",
         "@types/jsonwebtoken": "^9.0.10",
         "@types/node": "^24.0.3",
+        "@types/swagger-jsdoc": "^6.0.4",
+        "@types/swagger-ui-express": "^4.1.8",
+        "@typescript-eslint/eslint-plugin": "^8.38.0",
+        "@typescript-eslint/parser": "^8.38.0",
+        "eslint": "^9.31.0",
         "nodemon": "^3.1.10",
         "prisma": "^6.10.0",
+        "swagger-jsdoc": "^6.2.8",
+        "swagger-ui-express": "^5.0.1",
         "ts-node": "^10.9.2",
-        "ts-node-dev": "^2.0.0",
-        "typescript": "^5.8.3"
+        "tsx": "^4.20.3",
+        "typescript": "^5.8.3",
+        "typescript-eslint": "^8.38.0"
     }
 }

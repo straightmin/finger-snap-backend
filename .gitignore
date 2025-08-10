@@ -1,8 +1,88 @@
+# Dependencies
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
 .env
-.DS_Store
-/src/generated/prisma
-.vscode/
-/src/lib/prisma.ts
-/prisma/migrations/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
 dist/
+build/
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary folders
+tmp/
+temp/
+
+# IDE/Editor specific (선택적)
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Prisma
+# prisma/migrations/  ← 이것은 제거! 버전관리 필요
+# /src/lib/prisma.ts  ← 이것도 제거! 버전관리 필요
+
+# AWS/Cloud credentials (추가 보안)
+.aws/
+*.pem
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Testing
+.jest/
+test-results/
+
+# Docker
+docker-compose.override.yml
+
+# Claude
+/.claude
+CLAUDE.md
+
+# Gemini
+GEMINI.md
+
+# Prisma
+src/generated/prisma
+
+# Documentation
+docs/

@@ -1,36 +1,36 @@
 import { Request, Response } from 'express';
 import * as likeService from '../services/like.service';
-import { getPrismaClient } from '../services/prismaClient';
-
-const prisma = getPrismaClient();
-
+import { LikeTarget } from '../services/like.service';
+import { getErrorMessage } from '../utils/messageMapper';
 import { asyncHandler } from '../utils/asyncHandler';
 
-export const toggleLike = asyncHandler(async (
-  req: Request,
-  res: Response
-) => {
-  const userId = req.user?.id;
-  const { photoId, commentId } = req.body;
+/**
+ * 사진, 시리즈, 또는 댓글에 대한 좋아요를 토글합니다.
+ * @param req HTTP 요청 객체 (photoId, seriesId, commentId 중 하나 포함)
+ * @param res HTTP 응답 객체
+ * @returns 좋아요 토글 결과
+ */
+export const toggleLike = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?.id;
+    const { photoId, seriesId, commentId } = req.body;
 
-  if (!userId) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
+    if (!userId) {
+        return res.status(401).json({ message: getErrorMessage('GLOBAL.UNAUTHORIZED', req.lang) });
+    }
 
-  if (!photoId && !commentId) {
-    return res.status(400).json({ message: 'photoId or commentId is required' });
-  }
+    const targetIds = [photoId, seriesId, commentId].filter(Boolean);
+    if (targetIds.length !== 1) {
+        return res.status(400).json({ message: getErrorMessage('LIKE.TARGET_REQUIRED', req.lang) });
+    }
 
-  if (photoId && commentId) {
-    return res.status(400).json({ message: 'Only one of photoId or commentId can be provided' });
-  }
+    const target = {
+        userId,
+        ...(photoId && { photoId: Number(photoId) }),
+        ...(seriesId && { seriesId: Number(seriesId) }),
+        ...(commentId && { commentId: Number(commentId) })
+    };
 
-  let result;
-  if (photoId) {
-    result = await likeService.togglePhotoLike(userId, photoId);
-  } else if (commentId) {
-    result = await likeService.toggleCommentLike(userId, commentId);
-  }
+    const result = await likeService.toggleLike(target, req.lang || 'ko');
 
-  res.status(200).json(result);
+    res.status(200).json(result);
 });

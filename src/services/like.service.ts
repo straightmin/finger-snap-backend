@@ -1,90 +1,85 @@
-import { getPrismaClient } from './prismaClient';
+import { getMessage, getErrorMessage, Language } from '../utils/messageMapper';
+import { getPrismaClient } from '../utils/prismaClient';
+import * as notificationService from './notification.service';
 
 const prisma = getPrismaClient();
 
-export const togglePhotoLike = async (userId: number, photoId: number) => {
-  const photo = await prisma.photo.findUnique({
-    where: { id: photoId },
-  });
-
-  if (!photo) {
-    throw new Error('Photo not found');
-  }
-
-  // 삭제된 사진에는 좋아요 불가
-  if (photo.deletedAt) {
-    throw new Error('Photo is deleted');
-  }
-
-  // 사진 소유자는 공개 여부와 상관없이 좋아요 가능
-  if (photo.userId !== userId && !photo.isPublic) {
-    throw new Error('Photo is private');
-  }
-
-  const existingLike = await prisma.photoLike.findUnique({
-    where: {
-      userId_photoId: {
-        userId,
-        photoId,
-      },
-    },
-  });
-
-  if (existingLike) {
-    await prisma.photoLike.delete({
-      where: {
-        id: existingLike.id,
-      },
-    });
-    return { message: 'Photo unliked', liked: false };
-  } else {
-    await prisma.photoLike.create({
-      data: {
-        userId,
-        photoId,
-      },
-    });
-    return { message: 'Photo liked', liked: true };
-  }
+export type LikeTarget = {
+    userId: number;
+    photoId?: number;
+    seriesId?: number;
+    commentId?: number;
 };
 
-export const toggleCommentLike = async (userId: number, commentId: number) => {
-  const comment = await prisma.comment.findUnique({
-    where: { id: commentId },
-  });
+/**
+ * 사진, 시리즈, 또는 댓글에 대한 좋아요를 토글합니다.
+ * @param userId 사용자 ID
+ * @param target 좋아요 대상 (사진, 시리즈, 또는 댓글 ID)
+ * @param lang 언어 설정
+ * @returns 좋아요 토글 결과
+ */
+export const toggleLike = async (target: LikeTarget, lang: Language) => {
+    const { userId, photoId, seriesId, commentId } = target;
 
-  if (!comment) {
-    throw new Error('Comment not found');
-  }
+    let likeWhere: 
+        | { userId_photoId: { userId: number; photoId: number } }
+        | { userId_seriesId: { userId: number; seriesId: number } }
+        | { userId_commentId: { userId: number; commentId: number } };
+    let targetOwnerId: number;
 
-  // 삭제된 댓글에는 좋아요 불가
-  if (comment.deletedAt) {
-    throw new Error('Comment is deleted');
-  }
+    if (photoId) {
+        const photo = await prisma.photo.findUnique({ where: { id: photoId } });
+        if (!photo || photo.deletedAt) throw new Error(getErrorMessage('PHOTO.NOT_FOUND', lang));
+        if (!photo.isPublic && photo.userId !== userId) throw new Error(getErrorMessage('PHOTO.IS_PRIVATE', lang));
+        targetOwnerId = photo.userId;
+        likeWhere = { userId_photoId: { userId, photoId } };
+    } else if (seriesId) {
+        const series = await prisma.series.findUnique({ where: { id: seriesId } });
+        if (!series || series.deletedAt) throw new Error(getErrorMessage('SERIES.NOT_FOUND', lang));
+        if (!series.isPublic && series.userId !== userId) throw new Error(getErrorMessage('SERIES.IS_PRIVATE', lang));
+        targetOwnerId = series.userId;
+        likeWhere = { userId_seriesId: { userId, seriesId } };
+    } else if (commentId) {
+        const comment = await prisma.comment.findUnique({
+            where: { id: commentId },
+            include: { photo: true, series: true }
+        });
+        if (!comment || comment.deletedAt) throw new Error(getErrorMessage('COMMENT.NOT_FOUND', lang));
 
-  const existingLike = await prisma.commentLike.findUnique({
-    where: {
-      userId_commentId: {
-        userId,
-        commentId,
-      },
-    },
-  });
+        // Check access to parent resource
+        if (comment.photo) {
+            if (!comment.photo.isPublic && comment.photo.userId !== userId) throw new Error(getErrorMessage('PHOTO.IS_PRIVATE', lang));
+        } else if (comment.series) {
+            if (!comment.series.isPublic && comment.series.userId !== userId) throw new Error(getErrorMessage('SERIES.IS_PRIVATE', lang));
+        }
+        targetOwnerId = comment.userId;
+        likeWhere = { userId_commentId: { userId, commentId } };
+    } else {
+        throw new Error(getErrorMessage('LIKE.INVALID_TARGET', lang));
+    }
 
-  if (existingLike) {
-    await prisma.commentLike.delete({
-      where: {
-        id: existingLike.id,
-      },
-    });
-    return { message: 'Comment unliked', liked: false };
-  } else {
-    await prisma.commentLike.create({
-      data: {
-        userId,
-        commentId,
-      },
-    });
-    return { message: 'Comment liked', liked: true };
-  }
+    const existingLike = await prisma.like.findUnique({ where: likeWhere });
+
+    if (existingLike) {
+        await prisma.like.delete({ where: { id: existingLike.id } });
+        const targetType = photoId ? 'Photo' : seriesId ? 'Series' : 'Comment';
+        return { message: getMessage('INFO.LIKE.TARGET_UNLIKED', lang, { targetType }), liked: false };
+    } else {
+        const newLike = await prisma.like.create({
+            data: { userId, photoId, seriesId, commentId },
+        });
+
+        await notificationService.createNotification({
+            userId: targetOwnerId,
+            actorId: userId,
+            eventType: 'NEW_LIKE',
+            likeId: newLike.id,
+            photoId,
+            seriesId,
+            commentId,
+        });
+
+        const targetType = photoId ? 'Photo' : seriesId ? 'Series' : 'Comment';
+        return { message: getMessage('INFO.LIKE.TARGET_LIKED', lang, { targetType }), liked: true };
+    }
 };

@@ -1,58 +1,68 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import * as commentService from '../services/comment.service';
 import { asyncHandler } from '../utils/asyncHandler';
+import { getErrorMessage, getSuccessMessage } from '../utils/messageMapper';
 
 /**
- * 댓글을 작성하는 컨트롤러 함수
- * @param req Express의 Request 객체. `req.params.photoId`로 사진 ID, `req.body.content`로 댓글 내용, `req.body.parentId`로 부모 댓글 ID (선택), `req.user`로 인증된 사용자 정보를 받습니다.
- * @param res Express의 Response 객체. 생성된 댓글 정보 또는 에러 메시지를 반환합니다.
- * @param next Express의 NextFunction 객체. 에러 처리를 위해 사용됩니다.
+ * 새로운 댓글을 생성합니다.
+ * @param req HTTP 요청 객체 (content, parentId, photoId, seriesId 포함)
+ * @param res HTTP 응답 객체
+ * @returns 생성된 댓글 객체
  */
-export const createComment = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const photoId = parseInt(req.params.photoId, 10);
+export const createComment = asyncHandler(async (req: Request, res: Response) => {
+    const { photoId, seriesId } = req.params;
     const { content, parentId } = req.body;
-    const userId = req.user!.id; // authenticateToken 미들웨어를 통해 req.user가 보장됨
+    const userId = req.user!.id;
 
     if (!content || content.trim() === '') {
-        res.status(400).json({ message: 'COMMENT_CONTENT_CANNOT_BE_EMPTY' });
-        return; // 명시적으로 함수 종료
+        return res.status(400).json({ message: getErrorMessage('COMMENT.CONTENT_EMPTY', req.lang) });
     }
 
     const newComment = await commentService.createComment({
-        photoId,
         userId,
         content,
         parentId: parentId ? parseInt(parentId, 10) : undefined,
-    });
+        photoId: photoId ? parseInt(photoId, 10) : undefined,
+        seriesId: seriesId ? parseInt(seriesId, 10) : undefined,
+    }, req.lang || 'ko');
 
     res.status(201).json(newComment);
 });
 
 /**
- * 특정 사진의 댓글을 조회하는 컨트롤러 함수
- * @param req Express의 Request 객체. `req.params.photoId`로 사진 ID를 받습니다.
- * @param res Express의 Response 객체. 조회된 댓글 목록 또는 에러 메시지를 반환합니다.
- * @param next Express의 NextFunction 객체. 에러 처리를 위해 사용됩니다.
+ * 사진 또는 시리즈의 댓글 목록을 조회합니다.
+ * @param req HTTP 요청 객체 (photoId 또는 seriesId 포함)
+ * @param res HTTP 응답 객체
+ * @returns 댓글 목록
  */
-export const getCommentsByPhotoId = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const photoId = parseInt(req.params.photoId, 10);
+export const getComments = asyncHandler(async (req: Request, res: Response) => {
+    const { photoId, seriesId } = req.params;
+    // 유저가 로그인하지 않은 경우, 공개된 콘텐츠만 볼 수 있습니다. 로그인한 경우 자신의 비공개 콘텐츠도 볼 수 있습니다.
+    const userId = req.user?.id; // Can be undefined if user is not logged in
 
-    const comments = await commentService.getCommentsByPhotoId(photoId);
+    let comments;
+    if (photoId) {
+        comments = await commentService.getComments(userId, { photoId: parseInt(photoId, 10) }, req.lang || 'ko');
+    } else if (seriesId) {
+        comments = await commentService.getComments(userId, { seriesId: parseInt(seriesId, 10) }, req.lang || 'ko');
+    } else {
+        return res.status(400).json({ message: getErrorMessage('COMMENT.TARGET_REQUIRED', req.lang) });
+    }
 
     res.status(200).json(comments);
 });
 
 /**
- * 댓글을 삭제하는 컨트롤러 함수
- * @param req Express의 Request 객체. `req.params.commentId`로 댓글 ID, `req.user`로 인증된 사용자 정보를 받습니다.
- * @param res Express의 Response 객체. 성공 메시지 또는 에러 메시지를 반환합니다.
- * @param next Express의 NextFunction 객체. 에러 처리를 위해 사용됩니다.
+ * 댓글을 삭제합니다.
+ * @param req HTTP 요청 객체 (댓글 ID 포함)
+ * @param res HTTP 응답 객체
+ * @returns 댓글 삭제 성공 메시지
  */
-export const deleteComment = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+export const deleteComment = asyncHandler(async (req: Request, res: Response) => {
     const commentId = parseInt(req.params.commentId, 10);
-    const userId = req.user!.id; // authenticateToken 미들웨어를 통해 req.user가 보장됨
+    const userId = req.user!.id;
 
-    await commentService.deleteComment(commentId, userId);
+    await commentService.deleteComment(commentId, userId, req.lang || 'ko');
 
-    res.status(200).json({ message: 'COMMENT_DELETED_SUCCESSFULLY' });
+    res.status(200).json({ message: getSuccessMessage('COMMENT.DELETED', req.lang) });
 });

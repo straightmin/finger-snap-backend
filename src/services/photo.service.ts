@@ -1,28 +1,35 @@
-// src/services/photo.service.ts
-import { PrismaClient } from '@prisma/client';
+import { User } from '@prisma/client';
 import sharp from 'sharp';
-import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 import s3Client, { bucketName } from '../lib/s3Client';
+import { getErrorMessage, Language } from '../utils/messageMapper';
+import config from '../config';
+import { isFollowing } from './follow.service'; // isFollowing 함수 임포트
+import { getPrismaClient } from '../utils/prismaClient';
+
 
 // Prisma 클라이언트 인스턴스를 생성합니다.
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
+
+type AuthorWithFollowStatus = Pick<User, 'id' | 'username'> & { isFollowed: boolean };
 
 /**
  * 정렬 기준에 따라 사진 목록을 조회하는 서비스 함수
  * @param sortBy 정렬 기준 문자열 ('popular' 또는 그 외)
+ * @param currentUserId 현재 로그인된 사용자의 ID (선택 사항)
  * @returns 정렬된 사진 목록
  */
-export const getPhotos = async (sortBy: string) => {
+export const getPhotos = async (sortBy: string, currentUserId?: number) => {
     const whereCondition = {
         deletedAt: null, // 소프트 삭제된 사진은 제외
         isPublic: true, // 공개된 사진만 조회
     };
 
+    let photos;
+
     // 'popular' (인기순)으로 정렬하는 경우
     if (sortBy === 'popular') {
-        // Photo 모델을 직접 쿼리하면서, 관계된 PhotoLike의 개수(likes._count)를 기준으로 정렬합니다.
-        // 이 방식은 좋아요가 없는 사진도 결과에 포함시킵니다.
-        return prisma.photo.findMany({
+        photos = await prisma.photo.findMany({
             where: whereCondition,
             include: {
                 _count: {
@@ -36,7 +43,6 @@ export const getPhotos = async (sortBy: string) => {
                 }
             },
             orderBy: {
-                // likes 관계의 개수(count)를 기준으로 내림차순 정렬합니다.
                 likes: {
                     _count: 'desc',
                 },
@@ -44,7 +50,7 @@ export const getPhotos = async (sortBy: string) => {
         });
     } else {
         // 'latest' (최신순) 또는 그 외의 경우, 모든 사진을 최신순으로 정렬하여 반환합니다.
-        return prisma.photo.findMany({
+        photos = await prisma.photo.findMany({
             where: whereCondition,
             include: {
                 _count: {
@@ -58,10 +64,39 @@ export const getPhotos = async (sortBy: string) => {
                 }
             },
             orderBy: {
-                createdAt: 'desc', // 생성일(createdAt) 기준으로 내림차순 정렬
+                createdAt: 'desc',
             },
         });
     }
+
+    // 각 사진의 작성자에 대한 팔로우 상태 추가
+    // 사진 목록에서 모든 고유한 작성자 ID를 수집합니다.
+    const authorIds = Array.from(new Set(photos.map(photo => photo.author?.id).filter(id => id !== undefined)));
+
+    // Batch query to check follow status for all authors
+    const followStatuses = currentUserId
+        ? await prisma.follow.findMany({
+            where: {
+                followerId: currentUserId,
+                followingId: { in: authorIds },
+            },
+            select: { followingId: true },
+        })
+        : [];
+
+    const followedAuthorIds = new Set(followStatuses.map(status => status.followingId));
+
+    // Map follow status back to photos
+    const photosWithFollowStatus = photos.map(photo => {
+        let authorWithFollowStatus: AuthorWithFollowStatus | undefined;
+        if (photo.author) {
+            const isFollowed = currentUserId ? followedAuthorIds.has(photo.author.id) : false;
+            authorWithFollowStatus = { ...photo.author, isFollowed };
+        }
+        return { ...photo, author: authorWithFollowStatus };
+    });
+
+    return photosWithFollowStatus;
 };
 
 /**
@@ -69,8 +104,8 @@ export const getPhotos = async (sortBy: string) => {
  * @param photoId 조회할 사진의 ID
  * @returns 사진, 작성자, 댓글(작성자 포함), 좋아요 정보를 포함하는 객체
  */
-export const getPhotoById = async (photoId: number) => {
-    return prisma.photo.findFirst({
+export const getPhotoById = async (photoId: number, currentUserId?: number) => {
+    const photo = await prisma.photo.findFirst({
         where: { id: { equals: photoId }, deletedAt: null, isPublic: true },
         include: {
             author: {
@@ -98,54 +133,93 @@ export const getPhotoById = async (photoId: number) => {
             },
         },
     });
+
+    if (!photo) {
+        return null;
+    }
+
+    let authorWithFollowStatus: AuthorWithFollowStatus | undefined;
+    if (photo.author) {
+        const followed = currentUserId ? await isFollowing(currentUserId, photo.author.id) : false;
+        authorWithFollowStatus = { ...photo.author, isFollowed: followed };
+    }
+
+    return { ...photo, author: authorWithFollowStatus };
 };
 
 /**
- * 새로운 사진 데이터를 데이터베이스에 생성하는 서비스 함수
- * @param photoData 사진 생성에 필요한 데이터 (title, description, imageUrl, userId)
+ * 새로운 사진을 업로드하고 데이터베이스에 생성하는 서비스 함수
+ * @param photoData 사진 생성에 필요한 데이터 (title, description, file, userId)
  * @returns 생성된 사진 객체
  */
 export const createPhoto = async (photoData: {
     title?: string;
     description?: string;
-    imageUrl: string;
+    file: Express.Multer.File;
     userId: number;
 }) => {
-    const { title, description, imageUrl, userId } = photoData;
+    const { title, description, file, userId } = photoData;
 
-    // 1. imageUrl에서 S3 객체 키 추출
-    const urlParts = imageUrl.split('/');
-    const originalKey = urlParts.slice(3).join('/'); // "bucketName.s3.region.amazonaws.com/" 이후의 경로
+    // 1. 원본 이미지 리사이징
+    const MAX_IMAGE_DIMENSION = 1920;
+    const image = sharp(file.buffer);
+    const metadata = await image.metadata();
+    const { width, height } = metadata;
 
-    // 2. S3에서 원본 이미지 스트림 가져오기
-    const { Body } = await s3Client.send(new GetObjectCommand({
-        Bucket: bucketName,
-        Key: originalKey,
-    }));
-
-    if (!Body) {
-        throw new Error('Failed to get image from S3');
+    let resizedBuffer = file.buffer;
+    if (width && height) {
+        let resizeOptions: { width?: number; height?: number } = {};
+        
+        // 가로와 세로를 개별적으로 체크하여 적절한 리사이징 적용
+        if (width > MAX_IMAGE_DIMENSION && height > MAX_IMAGE_DIMENSION) {
+            // 둘 다 MAX_IMAGE_DIMENSION을 초과하는 경우, 더 큰 쪽을 기준으로 비율 유지
+            resizeOptions = width > height ? { width: MAX_IMAGE_DIMENSION } : { height: MAX_IMAGE_DIMENSION };
+        } else if (width > MAX_IMAGE_DIMENSION) {
+            // 가로만 MAX_IMAGE_DIMENSION을 초과하는 경우
+            resizeOptions = { width: MAX_IMAGE_DIMENSION };
+        } else if (height > MAX_IMAGE_DIMENSION) {
+            // 세로만 MAX_IMAGE_DIMENSION을 초과하는 경우
+            resizeOptions = { height: MAX_IMAGE_DIMENSION };
+        }
+        
+        // 리사이징이 필요한 경우에만 처리
+        if (Object.keys(resizeOptions).length > 0) {
+            resizedBuffer = await image.resize(resizeOptions).toBuffer();
+        }
     }
 
-    const imageBuffer = await Body.transformToByteArray();
-
-    // 3. sharp를 사용하여 썸네일 생성 (예시: 200x200)
-    const thumbnailBuffer = await sharp(imageBuffer)
-        .resize(200, 200, { fit: 'inside' })
-        .toFormat('jpeg')
+    // 2. 썸네일 생성
+    const thumbnailBuffer = await sharp(resizedBuffer)
+        .resize(300, 300, { fit: 'cover' })
         .toBuffer();
 
-    // 4. 썸네일을 S3에 업로드
-    const thumbnailKey = `thumbnails/${Date.now().toString()}-${originalKey.split('/').pop()}`;
-    await s3Client.send(new PutObjectCommand({
-        Bucket: bucketName,
-        Key: thumbnailKey,
-        Body: thumbnailBuffer,
-        ContentType: 'image/jpeg',
-    }));
-    const thumbnailUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${thumbnailKey}`;
+    // 3. 원본과 썸네일을 S3에 병렬로 업로드
+    const originalKey = `photos/${userId}/${Date.now()}-${file.originalname}`;
+    const thumbnailKey = `thumbnails/${userId}/${Date.now()}-${file.originalname}`;
 
-    // 5. DB에 원본 및 썸네일 URL 저장
+    const s3UploadParams = [
+        {
+            Bucket: bucketName,
+            Key: originalKey,
+            Body: resizedBuffer,
+            ContentType: file.mimetype,
+        },
+        {
+            Bucket: bucketName,
+            Key: thumbnailKey,
+            Body: thumbnailBuffer,
+            ContentType: 'image/jpeg', // 썸네일은 jpeg로 통일
+        },
+    ];
+
+    await Promise.all(
+        s3UploadParams.map(params => s3Client.send(new PutObjectCommand(params)))
+    );
+
+    const imageUrl = `https://${bucketName}.s3.${config.AWS_REGION}.amazonaws.com/${originalKey}`;
+    const thumbnailUrl = `https://${bucketName}.s3.${config.AWS_REGION}.amazonaws.com/${thumbnailKey}`;
+
+    // 4. DB에 사진 정보 저장
     return prisma.photo.create({
         data: {
             title: title || 'Untitled',
@@ -164,17 +238,17 @@ export const createPhoto = async (photoData: {
  * @returns 업데이트된 사진 객체
  * @throws Error 사진이 존재하지 않거나 권한이 없는 경우
  */
-export const deletePhoto = async (photoId: number, userId: number) => {
+export const deletePhoto = async (photoId: number, userId: number, lang: Language) => {
     const photo = await prisma.photo.findUnique({
         where: { id: photoId },
     });
 
     if (!photo) {
-        throw new Error('PHOTO_NOT_FOUND');
+        throw new Error(getErrorMessage('PHOTO.NOT_FOUND', lang));
     }
 
     if (photo.userId !== userId) {
-        throw new Error('UNAUTHORIZED');
+        throw new Error(getErrorMessage('GLOBAL.UNAUTHORIZED', lang));
     }
 
     return prisma.photo.update({
@@ -191,17 +265,17 @@ export const deletePhoto = async (photoId: number, userId: number) => {
  * @returns 업데이트된 사진 객체
  * @throws Error 사진이 존재하지 않거나 권한이 없는 경우
  */
-export const updatePhotoVisibility = async (photoId: number, userId: number, isPublic: boolean) => {
+export const updatePhotoVisibility = async (photoId: number, userId: number, isPublic: boolean, lang: Language) => {
     const photo = await prisma.photo.findUnique({
         where: { id: photoId },
     });
 
     if (!photo) {
-        throw new Error('PHOTO_NOT_FOUND');
+        throw new Error(getErrorMessage('PHOTO.NOT_FOUND', lang));
     }
 
     if (photo.userId !== userId) {
-        throw new Error('UNAUTHORIZED');
+        throw new Error(getErrorMessage('GLOBAL.UNAUTHORIZED', lang));
     }
 
     return prisma.photo.update({
@@ -216,11 +290,13 @@ export const updatePhotoVisibility = async (photoId: number, userId: number, isP
  * @returns 사용자가 좋아요를 누른 사진 목록
  */
 export const getLikedPhotos = async (userId: number) => {
-    return prisma.photoLike.findMany({
+    return prisma.like.findMany({
         where: {
             userId: userId,
+            photoId: { not: null }, // 사진에 대한 좋아요만 필터링
             photo: {
                 deletedAt: null, // 삭제되지 않은 사진만
+                isPublic: true, // 공개된 사진만
             },
         },
         include: {
