@@ -75,7 +75,11 @@ test-results/
 docker-compose.override.yml
 
 # Claude
-/CLAUDE.*
+./claude
+CLAUDE.md
+
+# Gemini
+GEMINI.md
 
 # Prisma
 src/generated/prisma
